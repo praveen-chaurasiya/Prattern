@@ -1,0 +1,22 @@
+# API keys
+.env
+
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Generated data (regenerated daily)
+data/
+
+# Generated output
+themes/
+
+# Claude Code
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db

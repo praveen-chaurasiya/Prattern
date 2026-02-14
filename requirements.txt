@@ -1,0 +1,24 @@
+# Stock Market Engine Dependencies
+
+# Stock data fetching
+yfinance>=0.2.38
+
+# AI APIs
+anthropic>=0.42.0          # Claude API for categorization
+google-generativeai>=0.8.0 # Gemini API for theme classification
+
+# Web scraping for Finviz news
+requests>=2.31.0
+beautifulsoup4>=4.12.3
+lxml>=5.1.0
+
+# Environment variables management
+python-dotenv>=1.0.0
+
+# Data handling
+pandas>=2.2.0
+numpy>=1.26.0
+polars>=0.20.0             # Fast dataframe library
+
+# GUI (optional - only needed for Pratten GUI app)
+customtkinter>=5.2.0       # Modern GUI framework
