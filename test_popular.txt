@@ -1,0 +1,11 @@
+# Popular stocks with lots of news coverage
+NVDA
+TSLA
+AAPL
+META
+GOOGL
+MSFT
+AMZN
+AMD
+NFLX
+CRM
