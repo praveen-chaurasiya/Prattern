@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt && cd web && npm install && VITE_API_BASE_URL='' VITE_API_KEY=$PRATTERN_API_KEY npm run build"
+
+[deploy]
+startCommand = "uvicorn prattern.api.server:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

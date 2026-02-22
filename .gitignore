@@ -13,9 +13,15 @@ data/
 
 # Generated output
 themes/
+logs/
 
 # Claude Code
 .claude/
+
+# Web frontend
+web/node_modules/
+web/dist/
+web/.env.production
 
 # OS files
 .DS_Store
