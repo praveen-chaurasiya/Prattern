@@ -13,7 +13,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from prattern.data.precomputed import load_precomputed_movers
-from prattern.analysis.orchestrator import analyze_all_movers
+from prattern.features.analyzer.orchestrator import analyze_all_movers
 
 DAILY_ANALYZED_PATH = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "data", "daily_analyzed.json")

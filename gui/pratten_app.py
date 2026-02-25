@@ -23,6 +23,11 @@ from prattern.core.file_io import read_tickers_from_file
 from prattern.core.validation import validate_user_tickers
 from prattern.data import get_high_velocity_movers, load_precomputed_movers, load_precomputed_analysis
 from prattern.analysis import analyze_all_movers
+from prattern.features.theme_tracker.db import (
+    load_theme_db, create_theme, delete_theme,
+    add_ticker_to_theme, remove_ticker_from_theme,
+)
+from prattern.features.theme_tracker.service import get_all_themes_performance
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -435,6 +440,7 @@ class PratternApp(ctk.CTk):
         self.tab_table = self.content_tabs.add("Table")
         self.tab_cards = self.content_tabs.add("Cards")
         self.tab_charts = self.content_tabs.add("Charts")
+        self.tab_themes = self.content_tabs.add("Theme Tracker")
         self.tab_log = self.content_tabs.add("Log")
 
         # Table tab setup
@@ -459,6 +465,9 @@ class PratternApp(ctk.CTk):
             self.tab_charts, fg_color=COLORS["bg_dark"]
         )
         self.charts_scroll.pack(fill="both", expand=True)
+
+        # Theme Tracker tab setup
+        self._build_theme_tracker_tab()
 
         # Log tab setup
         self.log_output = ctk.CTkTextbox(
@@ -973,6 +982,405 @@ class PratternApp(ctk.CTk):
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
         plt.close(fig)
+
+    # ------------------------------------------------------------------
+    # Theme Tracker tab
+    # ------------------------------------------------------------------
+    def _build_theme_tracker_tab(self):
+        self.tab_themes.grid_columnconfigure(0, weight=1)
+        self.tab_themes.grid_rowconfigure(1, weight=1)
+
+        # Header row: title + period selector
+        header = ctk.CTkFrame(self.tab_themes, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=5, pady=(5, 2))
+
+        ctk.CTkLabel(
+            header, text="Theme Performance",
+            font=("Arial", 16, "bold"), text_color=COLORS["text_primary"]
+        ).pack(side="left")
+
+        self.theme_period_var = ctk.StringVar(value="1w")
+        self.theme_period_btn = ctk.CTkSegmentedButton(
+            header, values=["today", "1w", "1m", "3m", "ytd"],
+            variable=self.theme_period_var,
+            command=lambda _: self._refresh_themes_thread()
+        )
+        self.theme_period_btn.pack(side="right")
+
+        self.theme_loading_label = ctk.CTkLabel(
+            header, text="", font=("Arial", 10), text_color=COLORS["text_muted"]
+        )
+        self.theme_loading_label.pack(side="right", padx=10)
+
+        # Scrollable area for theme cards + admin
+        self.theme_scroll = ctk.CTkScrollableFrame(
+            self.tab_themes, fg_color=COLORS["bg_dark"]
+        )
+        self.theme_scroll.grid(row=1, column=0, sticky="nsew")
+
+        # Container for theme cards inside scroll
+        self.theme_cards_frame = ctk.CTkFrame(self.theme_scroll, fg_color="transparent")
+        self.theme_cards_frame.pack(fill="x", expand=False)
+
+        # Admin toggle button
+        self.admin_visible = False
+        self.admin_toggle_btn = ctk.CTkButton(
+            self.theme_scroll, text="Show Admin Controls",
+            command=self._toggle_admin_section,
+            fg_color=COLORS["bg_card"], hover_color=COLORS["bg_row_hover"],
+            height=30, font=("Arial", 11)
+        )
+        self.admin_toggle_btn.pack(fill="x", padx=5, pady=(10, 2))
+
+        # Admin section (hidden by default)
+        self.admin_section = ctk.CTkFrame(self.theme_scroll, fg_color=COLORS["bg_card"], corner_radius=8)
+        self._build_admin_section()
+
+        # Track theme data
+        self.theme_data = []
+
+    def _toggle_admin_section(self):
+        if self.admin_visible:
+            self.admin_section.pack_forget()
+            self.admin_toggle_btn.configure(text="Show Admin Controls")
+        else:
+            self.admin_section.pack(fill="x", padx=5, pady=5)
+            self.admin_toggle_btn.configure(text="Hide Admin Controls")
+        self.admin_visible = not self.admin_visible
+
+    def _build_admin_section(self):
+        # Two-column layout: Create Theme (left) | AI Suggestions (right)
+        self.admin_section.grid_columnconfigure(0, weight=1)
+        self.admin_section.grid_columnconfigure(1, weight=2)
+
+        # --- Left: Create Theme ---
+        create_frame = ctk.CTkFrame(self.admin_section, fg_color="transparent")
+        create_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+
+        ctk.CTkLabel(
+            create_frame, text="Create Theme",
+            font=("Arial", 13, "bold"), text_color=COLORS["text_primary"]
+        ).pack(anchor="w", pady=(0, 5))
+
+        ctk.CTkLabel(
+            create_frame, text="Name:", font=("Arial", 11),
+            text_color=COLORS["text_secondary"]
+        ).pack(anchor="w")
+        self.create_theme_name = ctk.CTkEntry(
+            create_frame, placeholder_text="e.g. AI Infrastructure", width=200
+        )
+        self.create_theme_name.pack(anchor="w", pady=2)
+
+        ctk.CTkLabel(
+            create_frame, text="Description:", font=("Arial", 11),
+            text_color=COLORS["text_secondary"]
+        ).pack(anchor="w", pady=(5, 0))
+        self.create_theme_desc = ctk.CTkEntry(
+            create_frame, placeholder_text="Optional description", width=200
+        )
+        self.create_theme_desc.pack(anchor="w", pady=2)
+
+        self.create_theme_status = ctk.CTkLabel(
+            create_frame, text="", font=("Arial", 10), text_color=COLORS["text_muted"]
+        )
+        self.create_theme_status.pack(anchor="w", pady=2)
+
+        ctk.CTkButton(
+            create_frame, text="Create Theme", width=120, height=30,
+            fg_color=COLORS["accent_green"], hover_color="#00a381",
+            command=self._create_theme_action
+        ).pack(anchor="w", pady=5)
+
+        # --- Right: AI Suggestions ---
+        suggest_frame = ctk.CTkFrame(self.admin_section, fg_color="transparent")
+        suggest_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+
+        suggest_header = ctk.CTkFrame(suggest_frame, fg_color="transparent")
+        suggest_header.pack(fill="x")
+
+        ctk.CTkLabel(
+            suggest_header, text="AI Suggestions",
+            font=("Arial", 13, "bold"), text_color=COLORS["text_primary"]
+        ).pack(side="left")
+
+        ctk.CTkButton(
+            suggest_header, text="Refresh", width=80, height=26,
+            fg_color=COLORS["accent_blue"], hover_color="#2a6e9e",
+            command=self._refresh_suggestions
+        ).pack(side="right")
+
+        self.suggestions_scroll = ctk.CTkScrollableFrame(
+            suggest_frame, fg_color=COLORS["bg_dark"], height=200
+        )
+        self.suggestions_scroll.pack(fill="both", expand=True, pady=(5, 0))
+
+    def _create_theme_action(self):
+        name = self.create_theme_name.get().strip()
+        desc = self.create_theme_desc.get().strip()
+        if not name:
+            self.create_theme_status.configure(
+                text="[!] Name is required", text_color=COLORS["accent_red"]
+            )
+            return
+        try:
+            create_theme(name, desc)
+            self.create_theme_status.configure(
+                text=f"[OK] Created '{name}'", text_color=COLORS["accent_green"]
+            )
+            self.create_theme_name.delete(0, "end")
+            self.create_theme_desc.delete(0, "end")
+            self._refresh_themes_thread()
+            self._refresh_suggestions()
+        except ValueError as e:
+            self.create_theme_status.configure(
+                text=f"[!] {e}", text_color=COLORS["accent_red"]
+            )
+
+    def _refresh_suggestions(self):
+        for widget in self.suggestions_scroll.winfo_children():
+            widget.destroy()
+
+        analysis = load_precomputed_analysis()
+        if not analysis:
+            ctk.CTkLabel(
+                self.suggestions_scroll, text="No analyzed data found. Run the analyzer first.",
+                font=("Arial", 11), text_color=COLORS["text_muted"]
+            ).pack(pady=10)
+            return
+
+        db = load_theme_db()
+        existing_tickers = set()
+        for theme_data in db.get("themes", {}).values():
+            existing_tickers.update(theme_data.get("tickers", []))
+
+        theme_names = list(db.get("themes", {}).keys())
+
+        # Group suggestions by primary_theme
+        grouped = {}
+        for mover in analysis.get("movers", []):
+            ticker = mover.get("ticker", "")
+            if ticker and ticker not in existing_tickers:
+                theme_key = mover.get("primary_theme", "Other")
+                grouped.setdefault(theme_key, []).append(mover)
+
+        if not grouped:
+            ctk.CTkLabel(
+                self.suggestions_scroll, text="All tickers already assigned to themes.",
+                font=("Arial", 11), text_color=COLORS["text_muted"]
+            ).pack(pady=10)
+            return
+
+        for ai_theme, movers in sorted(grouped.items()):
+            # Theme group header
+            ctk.CTkLabel(
+                self.suggestions_scroll, text=ai_theme,
+                font=("Arial", 12, "bold"), text_color=COLORS["accent_blue"]
+            ).pack(anchor="w", padx=5, pady=(8, 2))
+
+            for mover in movers:
+                self._build_suggestion_row(mover, theme_names)
+
+    def _build_suggestion_row(self, mover, theme_names):
+        row = ctk.CTkFrame(self.suggestions_scroll, fg_color=COLORS["bg_row"], corner_radius=4, height=32)
+        row.pack(fill="x", padx=5, pady=1)
+        row.pack_propagate(False)
+
+        inner = ctk.CTkFrame(row, fg_color="transparent")
+        inner.pack(fill="x", padx=6, pady=2)
+
+        ticker = mover.get("ticker", "")
+        move_pct = mover.get("move_pct", 0)
+        category = mover.get("category", "N/A")
+
+        ctk.CTkLabel(
+            inner, text=ticker, font=("Arial", 11, "bold"),
+            text_color=COLORS["text_primary"], width=60, anchor="w"
+        ).pack(side="left", padx=(0, 4))
+
+        ctk.CTkLabel(
+            inner, text=f"+{move_pct:.1f}%", font=("Arial", 10, "bold"),
+            text_color="#2ecc71", width=60, anchor="w"
+        ).pack(side="left", padx=(0, 4))
+
+        cat_color = CATEGORY_COLORS.get(category, "#95a5a6")
+        ctk.CTkLabel(
+            inner, text=category, font=("Arial", 10),
+            text_color=cat_color, width=120, anchor="w"
+        ).pack(side="left", padx=(0, 4))
+
+        # Theme dropdown
+        dropdown_var = ctk.StringVar(value=theme_names[0] if theme_names else "")
+        if theme_names:
+            dropdown = ctk.CTkOptionMenu(
+                inner, variable=dropdown_var, values=theme_names,
+                width=140, height=24, font=("Arial", 10)
+            )
+            dropdown.pack(side="left", padx=(0, 4))
+
+            ctk.CTkButton(
+                inner, text="Add", width=50, height=24,
+                fg_color=COLORS["accent_green"], hover_color="#00a381",
+                font=("Arial", 10),
+                command=lambda t=ticker, v=dropdown_var: self._add_suggestion(t, v.get())
+            ).pack(side="left")
+        else:
+            ctk.CTkLabel(
+                inner, text="(create a theme first)", font=("Arial", 9),
+                text_color=COLORS["text_muted"]
+            ).pack(side="left")
+
+    def _add_suggestion(self, ticker, theme_name):
+        if not theme_name:
+            return
+        try:
+            add_ticker_to_theme(theme_name, ticker)
+            self._refresh_suggestions()
+            self._refresh_themes_thread()
+        except (KeyError, ValueError) as e:
+            self.create_theme_status.configure(
+                text=f"[!] {e}", text_color=COLORS["accent_red"]
+            )
+
+    def _refresh_themes_thread(self):
+        self.after(0, lambda: self.theme_loading_label.configure(text="Loading..."))
+        thread = threading.Thread(target=self._refresh_themes, daemon=True)
+        thread.start()
+
+    def _refresh_themes(self):
+        try:
+            period = self.theme_period_var.get()
+            themes = get_all_themes_performance(period)
+            self.theme_data = themes
+            self.after(0, self._populate_theme_cards)
+        except Exception as e:
+            self.after(0, lambda: self.theme_loading_label.configure(
+                text=f"Error: {str(e)[:40]}"
+            ))
+
+    def _populate_theme_cards(self):
+        self.theme_loading_label.configure(text="")
+
+        for widget in self.theme_cards_frame.winfo_children():
+            widget.destroy()
+
+        if not self.theme_data:
+            ctk.CTkLabel(
+                self.theme_cards_frame,
+                text="No themes configured. Use Admin Controls below to create themes.",
+                font=("Arial", 12), text_color=COLORS["text_muted"]
+            ).pack(pady=20)
+            return
+
+        self.theme_cards_frame.grid_columnconfigure(0, weight=1)
+        self.theme_cards_frame.grid_columnconfigure(1, weight=1)
+
+        for i, theme in enumerate(self.theme_data):
+            card = self._build_theme_card(theme)
+            card.grid(row=i // 2, column=i % 2, padx=6, pady=6, sticky="nsew")
+
+    def _build_theme_card(self, theme):
+        avg = theme.get("avg_change_pct", 0)
+        border_color = COLORS["accent_green"] if avg >= 0 else COLORS["accent_red"]
+
+        card = ctk.CTkFrame(
+            self.theme_cards_frame, fg_color=COLORS["bg_card"],
+            corner_radius=10, border_width=2, border_color=border_color
+        )
+
+        # Header: theme name + avg change
+        header = ctk.CTkFrame(card, fg_color="transparent")
+        header.pack(fill="x", padx=10, pady=(8, 2))
+
+        ctk.CTkLabel(
+            header, text=theme["theme"],
+            font=("Arial", 14, "bold"), text_color=COLORS["text_primary"]
+        ).pack(side="left")
+
+        change_color = COLORS["accent_green"] if avg >= 0 else COLORS["accent_red"]
+        ctk.CTkLabel(
+            header, text=f"{avg:+.1f}%",
+            font=("Arial", 14, "bold"), text_color=change_color
+        ).pack(side="right")
+
+        # Description + stock count
+        meta = ctk.CTkFrame(card, fg_color="transparent")
+        meta.pack(fill="x", padx=10, pady=2)
+
+        desc = theme.get("description", "")
+        if desc:
+            ctk.CTkLabel(
+                meta, text=desc, font=("Arial", 10),
+                text_color=COLORS["text_muted"]
+            ).pack(side="left")
+
+        ctk.CTkLabel(
+            meta, text=f"{theme.get('stock_count', 0)} stocks",
+            font=("Arial", 10), text_color=COLORS["text_secondary"]
+        ).pack(side="right")
+
+        # Stock rows
+        for stock in theme.get("stocks", []):
+            stock_row = ctk.CTkFrame(card, fg_color=COLORS["bg_row"], corner_radius=4, height=26)
+            stock_row.pack(fill="x", padx=8, pady=1)
+            stock_row.pack_propagate(False)
+
+            inner = ctk.CTkFrame(stock_row, fg_color="transparent")
+            inner.pack(fill="x", padx=6, pady=2)
+
+            ctk.CTkLabel(
+                inner, text=stock["ticker"], font=("Arial", 10, "bold"),
+                text_color=COLORS["text_primary"], width=50, anchor="w"
+            ).pack(side="left")
+
+            s_change = stock.get("change_pct", 0)
+            s_color = COLORS["accent_green"] if s_change >= 0 else COLORS["accent_red"]
+            ctk.CTkLabel(
+                inner, text=f"{s_change:+.1f}%", font=("Arial", 10, "bold"),
+                text_color=s_color, width=60, anchor="w"
+            ).pack(side="left")
+
+            ctk.CTkLabel(
+                inner, text=f"${stock.get('current_price', 0):.2f}",
+                font=("Arial", 10), text_color=COLORS["text_secondary"], width=60, anchor="w"
+            ).pack(side="left")
+
+            # Remove button
+            ctk.CTkButton(
+                inner, text="X", width=24, height=20,
+                fg_color=COLORS["accent_red"], hover_color="#c0392b",
+                font=("Arial", 9, "bold"),
+                command=lambda t=theme["theme"], s=stock["ticker"]: self._remove_ticker_action(t, s)
+            ).pack(side="right")
+
+        # Delete empty theme button
+        if theme.get("stock_count", 0) == 0:
+            ctk.CTkButton(
+                card, text="Delete Empty Theme", width=140, height=26,
+                fg_color=COLORS["accent_red"], hover_color="#c0392b",
+                font=("Arial", 10),
+                command=lambda t=theme["theme"]: self._delete_theme_action(t)
+            ).pack(pady=(4, 8))
+
+        return card
+
+    def _remove_ticker_action(self, theme_name, ticker):
+        try:
+            remove_ticker_from_theme(theme_name, ticker)
+            self._refresh_themes_thread()
+            self._refresh_suggestions()
+        except (KeyError, ValueError) as e:
+            self.create_theme_status.configure(
+                text=f"[!] {e}", text_color=COLORS["accent_red"]
+            )
+
+    def _delete_theme_action(self, theme_name):
+        try:
+            delete_theme(theme_name)
+            self._refresh_themes_thread()
+        except (KeyError, ValueError) as e:
+            self.create_theme_status.configure(
+                text=f"[!] {e}", text_color=COLORS["accent_red"]
+            )
 
     # ------------------------------------------------------------------
     # Refresh scan

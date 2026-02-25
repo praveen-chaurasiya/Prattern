@@ -12,6 +12,12 @@ from prattern.config import Config
 PROTECTED_PREFIXES = ("/movers", "/analysis", "/scan", "/jobs")
 PUBLIC_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
 
+# Theme routes that are public (read-only)
+THEME_PUBLIC_PREFIXES = ("/themes/tracker",)
+
+# Theme routes that require admin auth
+THEME_ADMIN_METHODS = {"POST", "DELETE"}
+
 
 class ApiKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -23,13 +29,27 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # Only protect API routes — static files and public paths pass through
+        # Only protect API routes -- static files and public paths pass through
         path = request.url.path
+
         if path in PUBLIC_PATHS:
             return await call_next(request)
 
+        # Theme routes: GET is public, POST/DELETE require auth
+        if path.startswith("/themes"):
+            if path == "/themes/suggestions":
+                # Suggestions endpoint requires auth
+                pass
+            elif request.method == "GET":
+                return await call_next(request)
+            # POST/DELETE on themes requires auth -- fall through to validation
+
         is_api_route = any(path.startswith(p) for p in PROTECTED_PREFIXES)
-        if not is_api_route:
+        is_theme_admin = path.startswith("/themes") and (
+            request.method in THEME_ADMIN_METHODS or path == "/themes/suggestions"
+        )
+
+        if not is_api_route and not is_theme_admin:
             return await call_next(request)
 
         # Validate API key

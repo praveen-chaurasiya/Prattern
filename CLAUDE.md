@@ -1,6 +1,47 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with the Prattern stock engine repository.
+
+---
+
+## Workflow Orchestration
+
+### 1. Plan Before You Build
+- Enter plan mode for ANY non-trivial task (3+ steps, architectural changes, new providers, new API endpoints)
+- Write a detailed spec upfront: what changes, which files, what the expected behavior is
+- If something goes sideways mid-task, STOP and re-plan — do not keep pushing forward
+- Use `tasks/todo.md` to write a checklist before starting implementation, check off items as you go
+- Add a review section to `tasks/todo.md` when done
+
+### 2. Verification Before Done
+- Never mark a task complete without proving it works
+- Run the relevant CLI/GUI/API path after any change and confirm expected output
+- Ask yourself: "Would a senior quant dev approve this?"
+- For scanner/analyzer changes: run a dry scan and confirm `daily_movers.json` and `daily_analyzed.json` are valid JSON with expected shape
+
+### 3. Self-Improvement Loop
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern that went wrong
+- Write a rule that prevents the same mistake from recurring
+- Review `tasks/lessons.md` at the start of each session for this project
+
+### 4. Autonomous Bug Fixing
+- When given a bug report: just fix it — no hand-holding needed
+- Locate the error in logs or output, trace to root cause, fix it
+- Zero unnecessary context-switching questions — resolve first, explain after
+- If CI or a scan job fails, diagnose and fix without being told how
+
+### 5. Demand Elegance (Balanced)
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky (e.g. hardcoded sleep, magic number): implement the proper solution
+- Skip this for simple, obvious one-line fixes — do not over-engineer
+- Challenge your own work before presenting it
+
+### 6. Minimal Impact Principle
+- Changes should only touch what is necessary — avoid scope creep
+- No temporary fixes or workarounds — find root causes
+- Avoid introducing bugs in adjacent code while fixing the target
+
+---
 
 ## Commands
 
@@ -26,24 +67,26 @@ python gui/pratten_app.py
 python cli/main.py                      # Interactive mode selection
 python cli/main.py 1                    # Auto-scan (pre-computed movers)
 python cli/main.py 2 "NVDA,TSLA,AAPL"  # Manual tickers
-python cli/main.py 2 tickers.txt       # Tickers from file
+python cli/main.py 2 tickers.txt        # Tickers from file
 
 # API server
 uvicorn prattern.api.server:app --port 8000
 
 # Web dashboard (React + Vite)
-cd web && npm install                  # First time setup
-cd web && npm run dev                  # Dev server at http://localhost:5173
-cd web && npm run build                # Production build to web/dist/
+cd web && npm install                   # First time setup
+cd web && npm run dev                   # Dev server at http://localhost:5173
+cd web && npm run build                 # Production build to web/dist/
 
-# Root-level redirects still work (backward compat)
+# Root-level redirects (backward compat)
 python main.py 1
 python pratten_app.py
 python scan_universe.py
 python analyze_movers.py
 ```
 
-No test framework is configured.
+No test framework is configured. Verify correctness manually by running the pipeline end-to-end.
+
+---
 
 ## Project Structure
 
@@ -98,8 +141,15 @@ data/                        # Runtime data (gitignored)
   daily_movers.json          # Raw movers from scanner
   daily_analyzed.json        # AI-analyzed movers
   universe_cache.json        # Cached ticker universe
+
 themes/                      # Saved results (gitignored)
+
+tasks/                       # Claude working directory (gitignored recommended)
+  todo.md                    # Active task checklist — created per task
+  lessons.md                 # Accumulated lessons from corrections
 ```
+
+---
 
 ## Architecture
 
@@ -144,22 +194,19 @@ Provider config variables (in `prattern/config.py`):
 | POST | `/jobs/analyze` | Start background job (mobile) |
 | GET | `/jobs/{job_id}` | Poll job status (mobile) |
 
+---
+
 ## Key Patterns
 
 - **Rate limiting:** Gemini free tier ~5 RPM. 15-second pause between batches, exponential backoff (3 retries), 3x wait multiplier on 429 errors.
 - **on_progress callback:** `analyze_all_movers(movers, on_progress=fn)` reports `{stage, current, total, detail}` events. Used by CLI, API SSE, and polling endpoints.
 - **GUI threading:** Analysis runs in `threading.Thread(daemon=True)`. `self.log()` does text insertion + `self.update()` for real-time display.
 - **Polars CPU fix:** `os.environ["POLARS_SKIP_CPU_CHECK"] = "1"` must appear before `import polars` in gui/pratten_app.py.
-- **Allowed enums:** Categories validated against `Config.CLAUDE_CATEGORIES`, themes against `Config.GEMINI_THEMES`. Both lists live in prattern/config.py.
+- **Allowed enums:** Categories validated against `Config.CLAUDE_CATEGORIES`, themes against `Config.GEMINI_THEMES`. Both lists live in `prattern/config.py`.
 - **sys.path in entry points:** `cli/`, `gui/`, `jobs/` scripts insert project root into `sys.path` so `prattern.*` imports work.
 - `data/` and `themes/` directories are gitignored (regenerated at runtime).
 
-### Stale Documentation
-- `README.md` references old flat file structure and outdated model names. Update README if modifying these areas.
-
-## Compact Instructions
-
-When compacting, focus on code changes, config updates, and AI classification results. Discard verbose tool output and intermediate search results.
+---
 
 ## Rules & Guardrails
 
@@ -167,3 +214,32 @@ When compacting, focus on code changes, config updates, and AI classification re
 - **Model roles:** `Config.AI_PRIMARY_PROVIDER` (default: gemini) is the primary classification engine. `Config.AI_FALLBACK_PROVIDER` (default: claude) fires when primary returns Unknown/Failed/Other. Swap via env vars or config.
 - **GUI requirements:** `gui/pratten_app.py` uses `customtkinter` and requires `os.environ["POLARS_SKIP_CPU_CHECK"] = "1"` set before importing polars to prevent crashes on older hardware.
 - **Encoding:** Avoid emojis in backend code (Windows charmap crashes). Use `[OK]`/`[ERROR]` text prefixes instead.
+- **No silent failures:** All provider calls must log their outcome (success or failure) before returning. Never swallow exceptions without a log statement.
+- **Schema stability:** Do not change field names in `Mover`, `AnalyzedMover`, or `ScanResult` dataclasses without updating `types/movers.ts` in the web frontend to match.
+- **Config is the single source of truth:** Thresholds, model names, category lists, and provider names live in `prattern/config.py`. Never hardcode these elsewhere.
+
+---
+
+## Domain Knowledge: Thematic Trading
+
+This engine is built around **thematic trading** — identifying stocks moving together due to a shared macro catalyst (e.g., AI chip surge, energy policy change, biotech approval).
+
+When writing or reviewing AI classification prompts:
+- Themes should be **catalyst-driven**, not sector labels (e.g., "AI infrastructure buildout" not "Technology")
+- A mover with no clear theme should return `Unknown`, not a forced category
+- Batch classification (Gemini) must preserve per-ticker identity — never let one ticker's news bleed into another's classification
+- Theme confidence matters: a mover up 30% on high volume with strong news is a stronger signal than one up 20% on thin volume
+
+When adding new analysis features, ask: "Does this help a trader understand *why* a group of stocks is moving, not just *that* they moved?"
+
+---
+
+## Stale Documentation
+
+- `README.md` references old flat file structure and outdated model names — update it when modifying architecture or adding providers.
+
+---
+
+## Compact Instructions
+
+When compacting long conversations, focus on: code changes made, config updates, AI classification results, and any errors encountered. Discard verbose tool output, intermediate search results, and repeated file listings.
