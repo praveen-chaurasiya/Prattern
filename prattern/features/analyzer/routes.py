@@ -2,6 +2,9 @@
 
 import asyncio
 import json
+import os
+import subprocess
+import sys
 import threading
 import uuid
 from datetime import datetime
@@ -194,3 +197,82 @@ def get_job_status(job_id: str):
         response["error"] = job["error"]
 
     return response
+
+
+# ---------------------------------------------------------------------------
+# Pattern 4: Full pipeline refresh (admin-only, runs scanner + analyzer)
+# ---------------------------------------------------------------------------
+
+# Project root for locating job scripts
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+@router.post("/scan/refresh")
+def start_scan_refresh():
+    """Run scanner + analyzer pipeline as subprocesses. Returns job_id for polling via GET /jobs/{job_id}."""
+    job_id = str(uuid.uuid4())
+    job = {
+        "status": "running",
+        "progress": {"stage": "scanning", "current": 0, "total": 2, "detail": "Starting universe scan..."},
+        "results": None,
+        "error": None,
+        "created_at": datetime.now().isoformat(),
+    }
+    _jobs[job_id] = job
+
+    def run_pipeline():
+        scanner_script = os.path.join(_PROJECT_ROOT, "jobs", "scan_universe.py")
+        analyzer_script = os.path.join(_PROJECT_ROOT, "jobs", "analyze_movers.py")
+
+        # Phase 1: Scanner
+        try:
+            job["progress"] = {"stage": "scanning", "current": 1, "total": 2, "detail": "Scanning universe for movers..."}
+            result = subprocess.run(
+                [sys.executable, "-u", scanner_script],
+                capture_output=True, text=True, timeout=1200,
+                cwd=_PROJECT_ROOT,
+            )
+            if result.returncode != 0:
+                job["error"] = f"Scanner failed: {result.stderr[:500]}"
+                job["status"] = "failed"
+                return
+        except subprocess.TimeoutExpired:
+            job["error"] = "Scanner timed out after 10 minutes"
+            job["status"] = "failed"
+            return
+        except Exception as e:
+            job["error"] = f"Scanner error: {str(e)}"
+            job["status"] = "failed"
+            return
+
+        # Phase 2: Analyzer
+        try:
+            job["progress"] = {"stage": "analyzing", "current": 2, "total": 2, "detail": "Running AI analysis on movers..."}
+            result = subprocess.run(
+                [sys.executable, "-u", analyzer_script],
+                capture_output=True, text=True, timeout=1200,
+                cwd=_PROJECT_ROOT,
+            )
+            if result.returncode != 0:
+                job["error"] = f"Analyzer failed: {result.stderr[:500]}"
+                job["status"] = "failed"
+                return
+        except subprocess.TimeoutExpired:
+            job["error"] = "Analyzer timed out after 15 minutes"
+            job["status"] = "failed"
+            return
+        except Exception as e:
+            job["error"] = f"Analyzer error: {str(e)}"
+            job["status"] = "failed"
+            return
+
+        # Load fresh results
+        analysis = load_precomputed_analysis()
+        job["results"] = analysis.get("movers", []) if analysis else []
+        job["progress"] = {"stage": "complete", "current": 2, "total": 2, "detail": "Pipeline complete"}
+        job["status"] = "complete"
+
+    thread = threading.Thread(target=run_pipeline, daemon=True)
+    thread.start()
+
+    return {"job_id": job_id}

@@ -57,19 +57,33 @@ export function ThemeCard({ theme, onUpdate }: ThemeCardProps) {
       {expanded && theme.stocks.length > 0 && (
         <div className="border-t border-border bg-surface">
           {theme.stocks.map((stock) => (
-            <div key={stock.ticker} className="flex items-center border-t border-border px-4 py-2 text-sm">
-              <span className="font-mono font-bold text-text-bright">{stock.ticker}</span>
-              <div className="ml-auto flex items-center gap-4">
-                <span className="font-mono text-muted">{formatCurrency(stock.current_price)}</span>
-                <span className={`font-mono font-medium ${stock.change_pct >= 0 ? 'text-accent' : 'text-danger'}`}>
-                  {formatPercent(stock.change_pct)}
-                </span>
-                <button
-                  className="rounded px-2 py-0.5 text-xs text-danger hover:bg-danger/10"
-                  onClick={(e) => handleRemoveTicker(stock.ticker, e)}
-                >
-                  Remove
-                </button>
+            <div key={stock.ticker} className="border-t border-border px-4 py-2 text-sm">
+              <div className="flex items-center">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-text-bright">{stock.ticker}</span>
+                    {stock.subtheme && (
+                      <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-medium text-accent">
+                        {stock.subtheme}
+                      </span>
+                    )}
+                  </div>
+                  {stock.role && (
+                    <p className="mt-0.5 text-[11px] text-muted">{stock.role}</p>
+                  )}
+                </div>
+                <div className="ml-auto flex items-center gap-4">
+                  <span className="font-mono text-muted">{formatCurrency(stock.current_price)}</span>
+                  <span className={`font-mono font-medium ${stock.change_pct >= 0 ? 'text-accent' : 'text-danger'}`}>
+                    {formatPercent(stock.change_pct)}
+                  </span>
+                  <button
+                    className="rounded px-2 py-0.5 text-xs text-danger hover:bg-danger/10"
+                    onClick={(e) => handleRemoveTicker(stock.ticker, e)}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           ))}

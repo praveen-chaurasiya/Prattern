@@ -4,15 +4,30 @@ import { StaleBanner } from './StaleBanner';
 
 interface HeaderProps {
   scanStatus?: ScanStatus | null;
+  refreshing?: boolean;
+  refreshStage?: string;
+  refreshDetail?: string;
+  refreshError?: string | null;
+  onRefresh?: () => void;
 }
 
-export function Header({ scanStatus }: HeaderProps) {
+export function Header({ scanStatus, refreshing, refreshStage, refreshDetail, refreshError, onRefresh }: HeaderProps) {
   const isStale = scanStatus?.analysis?.is_stale ?? scanStatus?.movers?.is_stale ?? false;
   const scanDate = scanStatus?.analysis?.scan_date ?? scanStatus?.movers?.scan_date ?? '';
+  const showBanner = isStale || refreshing || !!refreshError;
 
   return (
     <header>
-      {isStale && <StaleBanner scanDate={scanDate} />}
+      {showBanner && (
+        <StaleBanner
+          scanDate={scanDate}
+          refreshing={refreshing}
+          refreshStage={refreshStage}
+          refreshDetail={refreshDetail}
+          refreshError={refreshError}
+          onRefresh={onRefresh}
+        />
+      )}
       <div className="border-b border-border bg-surface-alt px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">

@@ -1,99 +1,84 @@
-# Task: Theme Tracker Admin Management — All Platforms
+# Task: Admin Refresh Button + Startup Performance Fixes
 
-**Date:** 2026-02-24
-**Status:** ✅ Done
-**Session:** Theme Admin Implementation
-
----
-
-## Context
-> The daily analyzer classifies stocks into themes via AI, producing `daily_analyzed.json`. The admin needs a way to review AI suggestions and manage the theme database (`data/theme_db.json`) from the GUI and web dashboard instead of raw API calls or editing JSON by hand.
-
-**Affected files:**
-- `prattern/features/theme_tracker/db.py` — new CRUD functions
-- `prattern/features/theme_tracker/routes.py` — new endpoints
-- `gui/pratten_app.py` — new Theme Tracker tab
-- `web/src/features/theme-tracker/` — admin components, hooks, API calls
-- `web/src/shared/types/themes.ts` — new suggestion types
+**Date:** 2026-02-27
+**Status:** In Progress
+**Session:** Refresh button, lazy imports, darkdetect fix, provider registry
 
 ---
 
-## Acceptance Criteria
-- [x] `create_theme()` and `delete_theme()` work in db.py
-- [x] POST `/themes` and DELETE `/themes/{name}` endpoints respond correctly
-- [x] Desktop GUI has Theme Tracker tab with period selector, theme cards, admin controls
-- [x] Web dashboard has collapsible Admin Controls with create form + suggestions list
-- [x] Backend imports pass: `python -c "from prattern.features.theme_tracker.routes import router"`
-- [x] Web production build passes: `cd web && npm run build`
+## What Was Done
+
+### Admin Refresh Button (All Platforms)
+- [x] Backend: `POST /scan/refresh` endpoint — runs scanner + analyzer as subprocesses, returns job_id for polling
+- [x] GUI: "Refresh Scan" button in sidebar (always visible), chains scanner then analyzer
+- [x] GUI: Live subprocess output streaming to Log tab (Popen + line-by-line)
+- [x] GUI: Auto-switches to Log tab on refresh start
+- [x] Web: `startScanRefresh()` + `pollJob()` API functions
+- [x] Web: `useScanRefresh` hook with 2s polling, progress state, error handling
+- [x] Web: StaleBanner refresh button (admin-only, shown when `VITE_API_KEY` set)
+- [x] Web: Header passes refresh props through to StaleBanner
+- [x] Web: Dashboard wires up `useScanRefresh`, reloads movers on complete
+- [x] Web: `useMovers` now exposes `reload()` function
+
+### Startup Performance Fixes
+- [x] Stubbed `darkdetect` before `import customtkinter` — was hanging on Python 3.14
+- [x] Lazy-imported `yfinance` in `theme_tracker/service.py` and `yfinance_provider.py`
+- [x] Lazy-imported `pandas` in `prattern/data/prices.py`
+- [x] Rewrote provider registry to lazy factories — providers only imported on first use
+- [x] Result: startup from infinite hang to ~0.2s
+
+### yfinance 429 Rate Limit Handling
+- [x] Added exponential backoff (5s/10s/20s) on 429 errors in `yfinance_provider.py`
+- [x] Added 2s pause between batches to avoid triggering rate limits
+- [x] Added 3 retries per batch with error-specific handling
+- [x] Subprocess timeout increased from 600s to 1200s (scan takes 5-10 min for 6200 tickers)
+
+### Subprocess Output Streaming
+- [x] `PYTHONUNBUFFERED=1` env var for real-time output in GUI
+- [x] `-u` flag on API subprocess calls
 
 ---
 
-## Plan
+## Open / Next Steps
 
-### Phase 1 — Backend
-- [x] Add `create_theme(name, description)` to db.py — validates no empty/duplicate names
-- [x] Add `delete_theme(name)` to db.py — only deletes empty themes
-- [x] Add `CreateThemeRequest` Pydantic model to routes.py
-- [x] Add `POST /themes` endpoint (create, admin)
-- [x] Add `DELETE /themes/{name}` endpoint (delete, admin)
-- [x] Place new routes before `/{theme_name}` catch-all GET
+- [ ] Migrate Gemini SDK: `google.generativeai` -> `google.genai` (deprecated, FutureWarning)
+- [ ] Upgrade to paid Gemini API to avoid free tier 429 quota exhaustion
+- [ ] Manual test: web dashboard refresh button in browser
+- [ ] Manual test: full scan + analyze via GUI refresh button
+- [ ] Consider reducing yfinance BATCH_SIZE to 100 if 429s persist
+- [ ] `git commit` all changes from this session
 
-### Phase 2 — Desktop GUI
-- [x] Add "Theme Tracker" tab to CTkTabview
-- [x] Period selector (today/1w/1m/3m/ytd) with background data refresh
-- [x] Theme cards showing name, avg change %, description, stocks with Remove buttons
-- [x] Delete button for empty themes
-- [x] Collapsible admin section with Create Theme form
-- [x] AI Suggestions panel grouped by theme with Add-to-theme dropdown
-- [x] All network calls in background threads via `self.after()` pattern
+---
 
-### Phase 3 — Web Dashboard
-- [x] Add `ThemeSuggestion` and `ThemeSuggestionsResponse` types to themes.ts
-- [x] Add `fetchSuggestions()`, `createTheme()`, `deleteTheme()` to api.ts
-- [x] Create `AdminSection.tsx` — collapsible wrapper
-- [x] Create `CreateThemeForm.tsx` — name + description + submit
-- [x] Create `SuggestionsList.tsx` — fetches and groups suggestions
-- [x] Create `SuggestionRow.tsx` — ticker, move%, category, theme dropdown, Add button
-- [x] Create `useThemeNames.ts` hook
-- [x] Update `useThemeTracker.ts` — add `refreshKey` + `refresh()` function
-- [x] Update `ThemeCard.tsx` — add Remove per stock, Delete Empty Theme button
-- [x] Update `ThemeTracker.tsx` — add `<AdminSection>` with refresh callback
-
-### Phase 4 — Verification
-- [x] Backend import check passes
-- [x] Web TypeScript build passes (0 errors, 71 modules)
-- [ ] Manual testing in browser — in progress
+## Files Modified
+| File | Change |
+|------|--------|
+| `prattern/features/analyzer/routes.py` | Added `POST /scan/refresh`, bumped subprocess timeouts |
+| `prattern/providers/__init__.py` | Rewritten — lazy factory pattern instead of eager import |
+| `prattern/providers/prices/yfinance_provider.py` | Lazy yfinance import, backoff + retry on 429, batch pausing |
+| `prattern/features/theme_tracker/service.py` | Lazy yfinance import |
+| `prattern/data/prices.py` | Lazy pandas import |
+| `gui/pratten_app.py` | darkdetect stub, sidebar refresh button, subprocess streaming, Log tab auto-switch |
+| `web/src/features/analyzer/api.ts` | `startScanRefresh()`, `pollJob()`, `JobStatus` type |
+| `web/src/features/analyzer/hooks/useScanRefresh.ts` | New — polling hook for refresh |
+| `web/src/features/analyzer/hooks/useMovers.ts` | Added `reload()` |
+| `web/src/features/analyzer/pages/Dashboard.tsx` | Wired up `useScanRefresh` |
+| `web/src/shared/components/StaleBanner.tsx` | Admin refresh button + progress display |
+| `web/src/shared/components/Header.tsx` | Passes refresh props to StaleBanner |
 
 ---
 
 ## Decisions Made
 | Decision | Rationale |
 |----------|-----------|
-| Inline stock rows in ThemeCard instead of reusing StockRow | Needed to add Remove button per row; StockRow had its own wrapper div causing layout issues |
-| Admin section collapsible by default | Keeps read-only view clean for non-admin users |
-| GUI calls db/service directly (no API) | Desktop app runs locally, no need for HTTP round-trip |
+| Stub darkdetect instead of upgrading | darkdetect 0.8.0 + Python 3.14 incompatibility; we hardcode dark mode |
+| Lazy provider registry | Scanner shouldn't pay cost of importing AI libs it doesn't use |
+| PYTHONUNBUFFERED over flush=True everywhere | Single env var covers all print() calls in subprocess |
+| 1200s timeout for scan | 31 batches x 200 tickers + backoff pauses can exceed 10 min |
 
 ---
 
-## Blockers
-- ~~None~~
-
----
-
-## Also Done This Session
-- Created `PratternDailyScan` Windows Task Scheduler job (Mon-Fri 4:30 PM, StartWhenAvailable=true)
-- Ran fresh scan: 116 movers found, 18 Gemini + 98 Claude fallback analyzed
-- Read updated CLAUDE.md with new workflow orchestration rules
-
----
-
-## Review
-**Completed:** 2026-02-24
-**Summary of changes:**
-- Backend: `create_theme()`, `delete_theme()` in db.py; POST/DELETE endpoints in routes.py
-- GUI: Full Theme Tracker tab with read-only view + collapsible admin controls
-- Web: 6 new files (AdminSection, CreateThemeForm, SuggestionsList, SuggestionRow, useThemeNames) + 4 modified files
-- Infra: Task Scheduler job with run-missed enabled
-
-**Did verification pass?** Yes — backend imports OK, web build OK (71 modules, 0 errors)
-**Lessons captured in `lessons.md`?** No corrections received yet this session
+## Lessons Captured
+- L-007: Heavy imports at module level caused GUI hang
+- L-008: darkdetect 0.8.0 hangs on Python 3.14
+- L-009: Provider registry must lazy-import per provider

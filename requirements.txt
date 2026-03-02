@@ -5,7 +5,7 @@ yfinance>=0.2.38
 
 # AI APIs
 anthropic>=0.42.0          # Claude API for categorization
-google-generativeai>=0.8.0 # Gemini API for theme classification
+google-genai>=1.0.0        # Gemini API (new unified SDK)
 
 # Web scraping for Finviz news
 requests>=2.31.0
@@ -22,6 +22,9 @@ polars>=0.20.0             # Fast dataframe library
 
 # GUI (optional - only needed for Pratten GUI app)
 customtkinter>=5.2.0       # Modern GUI framework
+
+# Market calendar (accurate NYSE holidays + trading sessions)
+exchange_calendars>=4.5.0
 
 # API server (optional - only needed for web/mobile backend)
 fastapi>=0.115.0           # REST API framework with SSE support

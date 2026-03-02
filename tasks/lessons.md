@@ -84,6 +84,36 @@
 
 ---
 
+### [L-007] Heavy imports at module level caused GUI startup hang
+**Date:** 2026-02-26
+**Category:** GUI
+**Trigger:** User reported GUI taking extremely long to start
+**Root cause:** `yfinance` was imported at top level in `theme_tracker/service.py` and `providers/prices/yfinance_provider.py`. Since the GUI imports these modules eagerly, yfinance (which pulls in requests, pandas internals, etc.) loaded before the window could render.
+**Rule:** Heavy third-party libraries (yfinance, google.generativeai, anthropic, matplotlib) must be lazy-imported inside the function that uses them, never at module top level. Only stdlib and lightweight internal modules at the top.
+**Files affected:** `prattern/features/theme_tracker/service.py`, `prattern/providers/prices/yfinance_provider.py`, `prattern/data/prices.py`
+
+---
+
+### [L-008] darkdetect 0.8.0 hangs on Python 3.14 — must be stubbed
+**Date:** 2026-02-27
+**Category:** GUI
+**Trigger:** GUI hung indefinitely on startup
+**Root cause:** `darkdetect` 0.8.0 (dependency of customtkinter 5.2.2) hangs during its `_windows_detect` module import on Python 3.14. The ctypes registry watcher setup never returns.
+**Rule:** `gui/pratten_app.py` must stub out `darkdetect` in `sys.modules` BEFORE importing customtkinter. We hardcode dark mode anyway, so system detection is unnecessary. If upgrading customtkinter or darkdetect, re-test startup time.
+**Files affected:** `gui/pratten_app.py`
+
+---
+
+### [L-009] Provider registry must be lazy — eager import of all providers blocks scanner
+**Date:** 2026-02-27
+**Category:** Provider
+**Trigger:** Refresh Scan timed out after 600s; last log line was `import google.generativeai`
+**Root cause:** `_auto_register()` in `providers/__init__.py` imported ALL providers (including AI libs) on the first `get_provider()` call. The scanner only needs `universe` + `prices`, but it paid the cost of importing `google.generativeai` and `anthropic` — which on Python 3.14 took extremely long or hung.
+**Rule:** Provider registry must use lazy factories. Each provider is only imported + instantiated when `get_provider()` is called for that specific type+name. Never eagerly import all providers at once.
+**Files affected:** `prattern/providers/__init__.py`
+
+---
+
 ## Recurring Patterns (Quick Reference)
 
 | # | Rule | File(s) |
@@ -94,6 +124,9 @@
 | L-004 | `POLARS_SKIP_CPU_CHECK=1` before polars import | `gui/pratten_app.py` |
 | L-005 | Keep `models.py` and `movers.ts` in sync | `prattern/core/models.py` + `web/src/types/movers.ts` |
 | L-006 | Enforce per-ticker isolation in AI batch prompts | `prattern/providers/ai/gemini.py` |
+| L-007 | Lazy-import heavy libs (yfinance, etc.) — never at module top | All provider/service files |
+| L-008 | Stub darkdetect before importing customtkinter on Python 3.14 | `gui/pratten_app.py` |
+| L-009 | Provider registry must lazy-import — never eagerly load all providers | `prattern/providers/__init__.py` |
 
 ---
 

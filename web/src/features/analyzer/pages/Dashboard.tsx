@@ -3,6 +3,7 @@ import type { AnalyzedMover } from '../../../shared/types/movers';
 import { useMovers } from '../hooks/useMovers';
 import { useScanStatus } from '../hooks/useScanStatus';
 import { useAnalysisSSE } from '../hooks/useAnalysisSSE';
+import { useScanRefresh } from '../hooks/useScanRefresh';
 import { Header } from '../../../shared/components/Header';
 import { Sidebar } from '../../../shared/components/Sidebar';
 import { MoversTable } from '../components/MoversTable';
@@ -12,7 +13,7 @@ import { Spinner } from '../../../shared/components/Spinner';
 import { EmptyState } from '../../../shared/components/EmptyState';
 
 export function Dashboard() {
-  const { movers, setMovers, loading, error } = useMovers();
+  const { movers, setMovers, loading, error, reload } = useMovers();
   const scanStatus = useScanStatus();
   const [priceFilter, setPriceFilter] = useState(0);
   const [liveMode, setLiveMode] = useState(false);
@@ -22,6 +23,10 @@ export function Dashboard() {
     [setMovers],
   );
   const sse = useAnalysisSSE(onSSEComplete);
+
+  const refresh = useScanRefresh(() => {
+    reload();
+  });
 
   function handleModeChange(live: boolean) {
     setLiveMode(live);
@@ -35,7 +40,14 @@ export function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header scanStatus={scanStatus} />
+      <Header
+        scanStatus={scanStatus}
+        refreshing={refresh.running}
+        refreshStage={refresh.stage}
+        refreshDetail={refresh.detail}
+        refreshError={refresh.error}
+        onRefresh={refresh.start}
+      />
       <div className="flex flex-1">
         <Sidebar
           scanStatus={scanStatus}

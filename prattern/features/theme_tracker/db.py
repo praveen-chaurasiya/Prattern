@@ -3,6 +3,7 @@
 import json
 import os
 from datetime import datetime
+from typing import List, Optional
 
 
 _DB_PATH = os.path.normpath(
@@ -10,12 +11,41 @@ _DB_PATH = os.path.normpath(
 )
 
 
+def _migrate_tickers(tickers: list) -> list:
+    """Convert plain string tickers to structured objects if needed."""
+    migrated = []
+    for t in tickers:
+        if isinstance(t, str):
+            migrated.append({"ticker": t, "subtheme": "", "role": ""})
+        else:
+            migrated.append(t)
+    return migrated
+
+
+def _get_ticker_strings(tickers: list) -> List[str]:
+    """Extract ticker symbol strings from structured ticker objects."""
+    return [t["ticker"] for t in tickers]
+
+
 def load_theme_db() -> dict:
-    """Load the theme database from disk."""
+    """Load the theme database from disk, auto-migrating flat tickers to structured."""
     if not os.path.exists(_DB_PATH):
         return {"themes": {}, "last_updated": None}
     with open(_DB_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+        db = json.load(f)
+
+    # Auto-migrate any plain string tickers to structured format
+    migrated = False
+    for theme_data in db.get("themes", {}).values():
+        tickers = theme_data.get("tickers", [])
+        if any(isinstance(t, str) for t in tickers):
+            theme_data["tickers"] = _migrate_tickers(tickers)
+            migrated = True
+
+    if migrated:
+        save_theme_db(db)
+
+    return db
 
 
 def save_theme_db(db: dict) -> None:
@@ -26,7 +56,7 @@ def save_theme_db(db: dict) -> None:
         json.dump(db, f, indent=2, ensure_ascii=False)
 
 
-def add_ticker_to_theme(theme: str, ticker: str) -> dict:
+def add_ticker_to_theme(theme: str, ticker: str, subtheme: str = "", role: str = "") -> dict:
     """Add a ticker to a theme. Returns updated theme entry."""
     db = load_theme_db()
     ticker = ticker.upper()
@@ -35,11 +65,33 @@ def add_ticker_to_theme(theme: str, ticker: str) -> dict:
         raise KeyError(f"Theme '{theme}' not found")
 
     tickers = db["themes"][theme]["tickers"]
-    if ticker not in tickers:
-        tickers.append(ticker)
+    existing = _get_ticker_strings(tickers)
+    if ticker not in existing:
+        tickers.append({"ticker": ticker, "subtheme": subtheme, "role": role})
         save_theme_db(db)
 
     return db["themes"][theme]
+
+
+def update_ticker_in_theme(theme: str, ticker: str, subtheme: Optional[str] = None, role: Optional[str] = None) -> dict:
+    """Update subtheme/role for an existing ticker in a theme. Returns updated theme entry."""
+    db = load_theme_db()
+    ticker = ticker.upper()
+
+    if theme not in db["themes"]:
+        raise KeyError(f"Theme '{theme}' not found")
+
+    tickers = db["themes"][theme]["tickers"]
+    for t in tickers:
+        if t["ticker"] == ticker:
+            if subtheme is not None:
+                t["subtheme"] = subtheme
+            if role is not None:
+                t["role"] = role
+            save_theme_db(db)
+            return db["themes"][theme]
+
+    raise ValueError(f"Ticker '{ticker}' not in theme '{theme}'")
 
 
 def create_theme(name: str, description: str = "") -> dict:
@@ -83,10 +135,10 @@ def remove_ticker_from_theme(theme: str, ticker: str) -> dict:
         raise KeyError(f"Theme '{theme}' not found")
 
     tickers = db["themes"][theme]["tickers"]
-    if ticker not in tickers:
-        raise ValueError(f"Ticker '{ticker}' not in theme '{theme}'")
+    for i, t in enumerate(tickers):
+        if t["ticker"] == ticker:
+            tickers.pop(i)
+            save_theme_db(db)
+            return db["themes"][theme]
 
-    tickers.remove(ticker)
-    save_theme_db(db)
-
-    return db["themes"][theme]
+    raise ValueError(f"Ticker '{ticker}' not in theme '{theme}'")

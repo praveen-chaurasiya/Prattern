@@ -2,13 +2,16 @@
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 
 from prattern.features.theme_tracker.db import (
     load_theme_db,
     add_ticker_to_theme,
     remove_ticker_from_theme,
+    update_ticker_in_theme,
     create_theme,
     delete_theme,
+    _get_ticker_strings,
 )
 from prattern.features.theme_tracker.service import (
     get_all_themes_performance,
@@ -47,7 +50,7 @@ def theme_suggestions():
     db = load_theme_db()
     existing_tickers = set()
     for theme_data in db.get("themes", {}).values():
-        existing_tickers.update(theme_data.get("tickers", []))
+        existing_tickers.update(_get_ticker_strings(theme_data.get("tickers", [])))
 
     suggestions = []
     for mover in analysis.get("movers", []):
@@ -115,15 +118,34 @@ def theme_detail(theme_name: str, period: str = "1w"):
 
 class AddTickerRequest(BaseModel):
     ticker: str
+    subtheme: str = ""
+    role: str = ""
 
 
 @router.post("/{theme_name}/tickers")
 def add_ticker(theme_name: str, body: AddTickerRequest):
     """Add a ticker to a theme (admin)."""
     try:
-        theme = add_ticker_to_theme(theme_name, body.ticker)
+        theme = add_ticker_to_theme(theme_name, body.ticker, body.subtheme, body.role)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    return {"theme": theme_name, **theme}
+
+
+class UpdateTickerRequest(BaseModel):
+    subtheme: Optional[str] = None
+    role: Optional[str] = None
+
+
+@router.put("/{theme_name}/tickers/{ticker}")
+def update_ticker(theme_name: str, ticker: str, body: UpdateTickerRequest):
+    """Update subtheme/role for an existing ticker in a theme (admin)."""
+    try:
+        theme = update_ticker_in_theme(theme_name, ticker, body.subtheme, body.role)
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return {"theme": theme_name, **theme}
 
 

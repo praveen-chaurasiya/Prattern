@@ -1,16 +1,10 @@
-"""Gemini AI batch classification provider."""
+"""Gemini AI batch classification provider — uses google.genai SDK."""
 
 import json
 import time
 from typing import Dict, List
 
-import google.generativeai as genai
-
 from prattern.config import Config
-
-# Configure Gemini lazily (only when this module is imported)
-if Config.GEMINI_KEY:
-    genai.configure(api_key=Config.GEMINI_KEY)
 
 
 def _parse_gemini_json(response_text: str, expected_count: int) -> List[Dict]:
@@ -52,7 +46,17 @@ def _parse_gemini_json(response_text: str, expected_count: int) -> List[Dict]:
 
 
 class GeminiClassifier:
-    """Primary AI classifier using Google Gemini."""
+    """Primary AI classifier using Google Gemini (google.genai SDK)."""
+
+    def __init__(self):
+        self._client = None
+
+    def _get_client(self):
+        """Lazy-init the genai client on first use."""
+        if self._client is None:
+            from google import genai
+            self._client = genai.Client(api_key=Config.GEMINI_KEY)
+        return self._client
 
     def classify_batch(self, movers_with_news: List[Dict]) -> List[Dict]:
         """
@@ -70,13 +74,19 @@ class GeminiClassifier:
             return movers_with_news
 
         try:
-            model = genai.GenerativeModel(
-                model_name=Config.GEMINI_MODEL,
-                generation_config={
-                    "temperature": 0.3,
-                    "top_p": 0.95,
-                    "max_output_tokens": 8192,
-                }
+            from google.genai import types
+
+            client = self._get_client()
+
+            # Strip "models/" prefix if present — new SDK doesn't need it
+            model_name = Config.GEMINI_MODEL
+            if model_name.startswith("models/"):
+                model_name = model_name[len("models/"):]
+
+            gen_config = types.GenerateContentConfig(
+                temperature=0.3,
+                top_p=0.95,
+                max_output_tokens=8192,
             )
 
             allowed_categories = ", ".join(Config.CLAUDE_CATEGORIES)
@@ -137,7 +147,11 @@ Your JSON array:"""
 
                 for attempt in range(3):
                     try:
-                        response = model.generate_content(prompt)
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=prompt,
+                            config=gen_config,
+                        )
                         response_text = response.text.strip()
                         print(f"   [DEBUG] Gemini response length: {len(response_text)} chars")
 
@@ -170,8 +184,8 @@ Your JSON array:"""
                         print(f"   [+] Analyzed batch {i//batch_size + 1}/{(len(movers_with_news)-1)//batch_size + 1}")
 
                         if i + batch_size < len(movers_with_news):
-                            print(f"   [WAIT] Pausing 15s for rate limit (free tier)...")
-                            time.sleep(15)
+                            print(f"   [WAIT] Pausing 5s between batches...")
+                            time.sleep(5)
 
                         break
 
@@ -181,8 +195,9 @@ Your JSON array:"""
                         print(f"   [!] Retry {attempt + 1}/3 after {wait_time}s: {error_msg[:80]}")
 
                         if "429" in error_msg or "quota" in error_msg.lower() or "rate" in error_msg.lower():
-                            print(f"   [WARNING] Rate limit detected! Waiting {wait_time * 3}s...")
-                            time.sleep(wait_time * 3)
+                            backoff = wait_time * 5
+                            print(f"   [WARNING] Rate limit detected! Waiting {backoff}s...")
+                            time.sleep(backoff)
                         else:
                             time.sleep(wait_time)
 

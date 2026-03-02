@@ -7,9 +7,20 @@ import os
 os.environ["POLARS_SKIP_CPU_CHECK"] = "1"  # Fix for older CPUs
 
 import sys
+import types
 
 # Ensure the project root is on sys.path so `prattern` package is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# Stub out darkdetect before customtkinter imports it.
+# darkdetect 0.8.0 hangs on Python 3.14 during its Windows registry ctypes setup.
+# We hardcode dark mode anyway, so system theme detection is unnecessary.
+_dd = types.ModuleType("darkdetect")
+_dd.theme = lambda: "Dark"
+_dd.isDark = lambda: True
+_dd.isLight = lambda: False
+_dd.listener = lambda callback: None
+sys.modules["darkdetect"] = _dd
 
 import customtkinter as ctk
 import subprocess
@@ -261,6 +272,9 @@ class PratternApp(ctk.CTk):
 
         self.current_movers: List[Dict] = []
         self.current_metadata: Dict = {}
+        self._theme_refresh_timer: Optional[str] = None
+        self._theme_card_widgets: Dict[str, dict] = {}  # theme_name -> widget refs
+        self._theme_expanded: Dict[str, bool] = {}      # theme_name -> expanded state
 
         # Two-column grid: sidebar (fixed 220) + main (stretch)
         self.grid_columnconfigure(0, weight=0, minsize=240)
@@ -373,6 +387,15 @@ class PratternApp(ctk.CTk):
         )
         self.run_btn.pack(padx=15, pady=5, fill="x")
 
+        # Refresh Scan button (runs scanner + analyzer pipeline)
+        self.refresh_btn = ctk.CTkButton(
+            self.sidebar, text="Refresh Scan",
+            command=self._refresh_scan_thread,
+            font=("Arial", 12), height=35,
+            fg_color=COLORS["accent_blue"], hover_color="#2a6e9e"
+        )
+        self.refresh_btn.pack(padx=15, pady=(2, 5), fill="x")
+
         # Progress bar (hidden initially)
         self.progress_bar = ctk.CTkProgressBar(self.sidebar, mode="determinate", width=200)
         self.progress_bar.set(0)
@@ -401,12 +424,12 @@ class PratternApp(ctk.CTk):
             self.stale_banner, text="", font=("Arial", 12, "bold"), text_color="white"
         )
         self.stale_label.pack(side="left", padx=10, pady=6)
-        self.refresh_btn = ctk.CTkButton(
+        self.stale_refresh_btn = ctk.CTkButton(
             self.stale_banner, text="Refresh Scan", width=120,
             fg_color="#cc3333", hover_color="#aa2222",
             command=self._refresh_scan_thread
         )
-        self.refresh_btn.pack(side="right", padx=10, pady=6)
+        self.stale_refresh_btn.pack(side="right", padx=10, pady=6)
 
         # --- Summary stats bar ---
         self.stats_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
@@ -437,10 +460,10 @@ class PratternApp(ctk.CTk):
         )
         self.content_tabs.grid(row=2, column=0, sticky="nsew", padx=15, pady=(5, 15))
 
+        self.tab_themes = self.content_tabs.add("Theme Tracker")
         self.tab_table = self.content_tabs.add("Table")
         self.tab_cards = self.content_tabs.add("Cards")
         self.tab_charts = self.content_tabs.add("Charts")
-        self.tab_themes = self.content_tabs.add("Theme Tracker")
         self.tab_log = self.content_tabs.add("Log")
 
         # Table tab setup
@@ -999,7 +1022,7 @@ class PratternApp(ctk.CTk):
             font=("Arial", 16, "bold"), text_color=COLORS["text_primary"]
         ).pack(side="left")
 
-        self.theme_period_var = ctk.StringVar(value="1w")
+        self.theme_period_var = ctk.StringVar(value="today")
         self.theme_period_btn = ctk.CTkSegmentedButton(
             header, values=["today", "1w", "1m", "3m", "ytd"],
             variable=self.theme_period_var,
@@ -1036,8 +1059,9 @@ class PratternApp(ctk.CTk):
         self.admin_section = ctk.CTkFrame(self.theme_scroll, fg_color=COLORS["bg_card"], corner_radius=8)
         self._build_admin_section()
 
-        # Track theme data
+        # Track theme data and auto-load on startup
         self.theme_data = []
+        self._refresh_themes_thread()
 
     def _toggle_admin_section(self):
         if self.admin_visible:
@@ -1241,7 +1265,19 @@ class PratternApp(ctk.CTk):
                 text=f"[!] {e}", text_color=COLORS["accent_red"]
             )
 
+    def _cancel_theme_timer(self):
+        if self._theme_refresh_timer is not None:
+            self.after_cancel(self._theme_refresh_timer)
+            self._theme_refresh_timer = None
+
+    def _schedule_theme_timer(self):
+        self._cancel_theme_timer()
+        from prattern.features.theme_tracker.service import _is_market_open
+        interval = 120_000 if _is_market_open() else 3_600_000  # 2 min open, 1 hr closed
+        self._theme_refresh_timer = self.after(interval, self._refresh_themes_thread)
+
     def _refresh_themes_thread(self):
+        self._cancel_theme_timer()
         self.after(0, lambda: self.theme_loading_label.configure(text="Loading..."))
         thread = threading.Thread(target=self._refresh_themes, daemon=True)
         thread.start()
@@ -1252,18 +1288,20 @@ class PratternApp(ctk.CTk):
             themes = get_all_themes_performance(period)
             self.theme_data = themes
             self.after(0, self._populate_theme_cards)
+            self.after(0, self._schedule_theme_timer)
         except Exception as e:
             self.after(0, lambda: self.theme_loading_label.configure(
                 text=f"Error: {str(e)[:40]}"
             ))
+            self.after(0, self._schedule_theme_timer)
 
     def _populate_theme_cards(self):
         self.theme_loading_label.configure(text="")
 
-        for widget in self.theme_cards_frame.winfo_children():
-            widget.destroy()
-
         if not self.theme_data:
+            self._theme_card_widgets.clear()
+            for widget in self.theme_cards_frame.winfo_children():
+                widget.destroy()
             ctk.CTkLabel(
                 self.theme_cards_frame,
                 text="No themes configured. Use Admin Controls below to create themes.",
@@ -1271,40 +1309,134 @@ class PratternApp(ctk.CTk):
             ).pack(pady=20)
             return
 
+        # Check if theme list changed (different names or order)
+        new_names = [t["theme"] for t in self.theme_data]
+        old_names = list(self._theme_card_widgets.keys())
+
+        if new_names == old_names:
+            # In-place update — just update values
+            self._update_theme_cards_inplace()
+        else:
+            # Full rebuild — theme list changed
+            self._full_rebuild_theme_cards()
+
+    def _full_rebuild_theme_cards(self):
+        # Save expanded state before destroying
+        for name, refs in self._theme_card_widgets.items():
+            self._theme_expanded[name] = refs.get("expanded", False)
+
+        for widget in self.theme_cards_frame.winfo_children():
+            widget.destroy()
+        self._theme_card_widgets.clear()
+
+        sorted_data = sorted(self.theme_data, key=lambda t: t.get("avg_change_pct", 0), reverse=True)
+        best = [t for t in sorted_data if t.get("avg_change_pct", 0) >= 0]
+        worst = [t for t in sorted_data if t.get("avg_change_pct", 0) < 0]
+
         self.theme_cards_frame.grid_columnconfigure(0, weight=1)
         self.theme_cards_frame.grid_columnconfigure(1, weight=1)
 
-        for i, theme in enumerate(self.theme_data):
-            card = self._build_theme_card(theme)
-            card.grid(row=i // 2, column=i % 2, padx=6, pady=6, sticky="nsew")
+        # Left column: Best Performers
+        left_col = ctk.CTkFrame(self.theme_cards_frame, fg_color="transparent")
+        left_col.grid(row=0, column=0, sticky="nsew", padx=(0, 3))
 
-    def _build_theme_card(self, theme):
+        ctk.CTkLabel(
+            left_col, text="Best Performers",
+            font=("Arial", 13, "bold"), text_color=COLORS["accent_green"]
+        ).pack(anchor="w", padx=8, pady=(6, 4))
+
+        if best:
+            for theme in best:
+                card = self._build_theme_card(theme, parent=left_col)
+                card.pack(fill="x", padx=6, pady=4)
+        else:
+            ctk.CTkLabel(
+                left_col, text="No gainers this period",
+                font=("Arial", 11), text_color=COLORS["text_muted"]
+            ).pack(anchor="w", padx=8, pady=4)
+
+        # Right column: Worst Performers
+        right_col = ctk.CTkFrame(self.theme_cards_frame, fg_color="transparent")
+        right_col.grid(row=0, column=1, sticky="nsew", padx=(3, 0))
+
+        ctk.CTkLabel(
+            right_col, text="Worst Performers",
+            font=("Arial", 13, "bold"), text_color=COLORS["accent_red"]
+        ).pack(anchor="w", padx=8, pady=(6, 4))
+
+        if worst:
+            for theme in worst:
+                card = self._build_theme_card(theme, parent=right_col)
+                card.pack(fill="x", padx=6, pady=4)
+        else:
+            ctk.CTkLabel(
+                right_col, text="No losers this period",
+                font=("Arial", 11), text_color=COLORS["text_muted"]
+            ).pack(anchor="w", padx=8, pady=4)
+
+    def _update_theme_cards_inplace(self):
+        """Update existing card labels without destroying widgets."""
+        for theme in self.theme_data:
+            name = theme["theme"]
+            refs = self._theme_card_widgets.get(name)
+            if not refs:
+                continue
+
+            avg = theme.get("avg_change_pct", 0)
+            change_color = COLORS["accent_green"] if avg >= 0 else COLORS["accent_red"]
+            border_color = change_color
+
+            # Update card border
+            refs["card"].configure(border_color=border_color)
+
+            # Update avg % label
+            refs["avg_label"].configure(text=f"{avg:+.1f}%", text_color=change_color)
+
+            # Update stock count
+            refs["count_label"].configure(text=f"{theme.get('stock_count', 0)} stocks")
+
+            # Update stock rows
+            stocks = theme.get("stocks", [])
+            stock_refs = refs.get("stock_refs", {})
+            for stock in stocks:
+                ticker = stock["ticker"]
+                sr = stock_refs.get(ticker)
+                if not sr:
+                    continue
+                s_change = stock.get("change_pct", 0)
+                s_color = COLORS["accent_green"] if s_change >= 0 else COLORS["accent_red"]
+                sr["change_label"].configure(text=f"{s_change:+.1f}%", text_color=s_color)
+                sr["price_label"].configure(text=f"${stock.get('current_price', 0):.2f}")
+
+    def _build_theme_card(self, theme, parent=None):
+        name = theme["theme"]
         avg = theme.get("avg_change_pct", 0)
         border_color = COLORS["accent_green"] if avg >= 0 else COLORS["accent_red"]
 
         card = ctk.CTkFrame(
-            self.theme_cards_frame, fg_color=COLORS["bg_card"],
+            parent or self.theme_cards_frame, fg_color=COLORS["bg_card"],
             corner_radius=10, border_width=2, border_color=border_color
         )
 
-        # Header: theme name + avg change
-        header = ctk.CTkFrame(card, fg_color="transparent")
+        # Header: clickable to expand/collapse stocks
+        header = ctk.CTkFrame(card, fg_color="transparent", cursor="hand2")
         header.pack(fill="x", padx=10, pady=(8, 2))
 
         ctk.CTkLabel(
-            header, text=theme["theme"],
+            header, text=name,
             font=("Arial", 14, "bold"), text_color=COLORS["text_primary"]
         ).pack(side="left")
 
         change_color = COLORS["accent_green"] if avg >= 0 else COLORS["accent_red"]
-        ctk.CTkLabel(
+        avg_label = ctk.CTkLabel(
             header, text=f"{avg:+.1f}%",
             font=("Arial", 14, "bold"), text_color=change_color
-        ).pack(side="right")
+        )
+        avg_label.pack(side="right")
 
         # Description + stock count
-        meta = ctk.CTkFrame(card, fg_color="transparent")
-        meta.pack(fill="x", padx=10, pady=2)
+        meta = ctk.CTkFrame(card, fg_color="transparent", cursor="hand2")
+        meta.pack(fill="x", padx=10, pady=(0, 6))
 
         desc = theme.get("description", "")
         if desc:
@@ -1313,14 +1445,41 @@ class PratternApp(ctk.CTk):
                 text_color=COLORS["text_muted"]
             ).pack(side="left")
 
-        ctk.CTkLabel(
+        count_label = ctk.CTkLabel(
             meta, text=f"{theme.get('stock_count', 0)} stocks",
             font=("Arial", 10), text_color=COLORS["text_secondary"]
-        ).pack(side="right")
+        )
+        count_label.pack(side="right")
 
-        # Stock rows
+        # Stock rows container (hidden by default, or restored from expanded state)
+        stocks_frame = ctk.CTkFrame(card, fg_color="transparent")
+        was_expanded = self._theme_expanded.get(name, False)
+
+        # Track widget refs for in-place updates
+        stock_refs = {}
+
+        def toggle_stocks(event=None):
+            expanded = self._theme_expanded.get(name, False)
+            if expanded:
+                stocks_frame.pack_forget()
+                self._theme_expanded[name] = False
+            else:
+                stocks_frame.pack(fill="x", padx=0, pady=(0, 4))
+                self._theme_expanded[name] = True
+            # Update refs
+            refs = self._theme_card_widgets.get(name)
+            if refs:
+                refs["expanded"] = self._theme_expanded[name]
+
+        # Bind click on header and meta rows
+        for widget in (header, meta):
+            widget.bind("<Button-1>", toggle_stocks)
+            for child in widget.winfo_children():
+                child.bind("<Button-1>", toggle_stocks)
+
+        # Build stock rows inside hidden container
         for stock in theme.get("stocks", []):
-            stock_row = ctk.CTkFrame(card, fg_color=COLORS["bg_row"], corner_radius=4, height=26)
+            stock_row = ctk.CTkFrame(stocks_frame, fg_color=COLORS["bg_row"], corner_radius=4, height=26)
             stock_row.pack(fill="x", padx=8, pady=1)
             stock_row.pack_propagate(False)
 
@@ -1334,15 +1493,31 @@ class PratternApp(ctk.CTk):
 
             s_change = stock.get("change_pct", 0)
             s_color = COLORS["accent_green"] if s_change >= 0 else COLORS["accent_red"]
-            ctk.CTkLabel(
+            change_lbl = ctk.CTkLabel(
                 inner, text=f"{s_change:+.1f}%", font=("Arial", 10, "bold"),
                 text_color=s_color, width=60, anchor="w"
-            ).pack(side="left")
+            )
+            change_lbl.pack(side="left")
 
-            ctk.CTkLabel(
+            price_lbl = ctk.CTkLabel(
                 inner, text=f"${stock.get('current_price', 0):.2f}",
                 font=("Arial", 10), text_color=COLORS["text_secondary"], width=60, anchor="w"
-            ).pack(side="left")
+            )
+            price_lbl.pack(side="left")
+
+            # Subtheme badge + role
+            subtheme = stock.get("subtheme", "")
+            role = stock.get("role", "")
+            if subtheme:
+                ctk.CTkLabel(
+                    inner, text=subtheme, font=("Arial", 9),
+                    text_color=COLORS["accent_green"], width=80, anchor="w"
+                ).pack(side="left", padx=(4, 0))
+            if role:
+                ctk.CTkLabel(
+                    inner, text=role, font=("Arial", 8),
+                    text_color=COLORS["text_muted"], anchor="w"
+                ).pack(side="left", padx=(2, 0))
 
             # Remove button
             ctk.CTkButton(
@@ -1352,6 +1527,11 @@ class PratternApp(ctk.CTk):
                 command=lambda t=theme["theme"], s=stock["ticker"]: self._remove_ticker_action(t, s)
             ).pack(side="right")
 
+            stock_refs[stock["ticker"]] = {
+                "change_label": change_lbl,
+                "price_label": price_lbl,
+            }
+
         # Delete empty theme button
         if theme.get("stock_count", 0) == 0:
             ctk.CTkButton(
@@ -1360,6 +1540,19 @@ class PratternApp(ctk.CTk):
                 font=("Arial", 10),
                 command=lambda t=theme["theme"]: self._delete_theme_action(t)
             ).pack(pady=(4, 8))
+
+        # Restore expanded state
+        if was_expanded:
+            stocks_frame.pack(fill="x", padx=0, pady=(0, 4))
+
+        # Store refs
+        self._theme_card_widgets[name] = {
+            "card": card,
+            "avg_label": avg_label,
+            "count_label": count_label,
+            "stock_refs": stock_refs,
+            "expanded": was_expanded,
+        }
 
         return card
 
@@ -1387,24 +1580,79 @@ class PratternApp(ctk.CTk):
     # ------------------------------------------------------------------
     def _refresh_scan_thread(self):
         self.refresh_btn.configure(state="disabled", text="Scanning...")
+        self.content_tabs.set("Log")
         thread = threading.Thread(target=self._refresh_scan, daemon=True)
         thread.start()
 
-    def _refresh_scan(self):
+    def _run_subprocess_with_log(self, cmd: list, timeout: int = 600) -> bool:
+        """Run a subprocess, streaming stdout/stderr to the Log tab in real time.
+        Returns True on success (returncode 0), False otherwise."""
         try:
-            self.log("\n[REFRESH] Running scan_universe.py ...")
-            result = subprocess.run(
-                [sys.executable, os.path.join(os.path.dirname(__file__), "..", "jobs", "scan_universe.py")],
-                capture_output=True, text=True, timeout=600
+            # Use -u flag for unbuffered Python output so we see lines in real time
+            env = os.environ.copy()
+            env["PYTHONUNBUFFERED"] = "1"
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                env=env,
+                cwd=os.path.join(os.path.dirname(__file__), ".."),
             )
-            if result.returncode == 0:
-                self.log("[REFRESH] Scan complete! Reloading data...")
-                self.after(0, lambda: self.stale_banner.grid_forget())
-                self._run_mode_autoscan()
-            else:
-                self.log(f"[REFRESH] Scan failed:\n{result.stderr}")
-        except subprocess.TimeoutExpired:
-            self.log("[REFRESH] Scan timed out after 10 minutes")
+
+            import time as _time
+            start = _time.time()
+            for line in proc.stdout:
+                self.log(line.rstrip())
+                if _time.time() - start > timeout:
+                    proc.kill()
+                    self.log(f"[REFRESH] Timed out after {timeout}s")
+                    return False
+
+            proc.wait()
+            if proc.returncode != 0:
+                self.log(f"[REFRESH] Process exited with code {proc.returncode}")
+                return False
+            return True
+
+        except Exception as e:
+            self.log(f"[REFRESH] Error: {e}")
+            return False
+
+    def _refresh_scan(self):
+        jobs_dir = os.path.join(os.path.dirname(__file__), "..", "jobs")
+        try:
+            # Phase 1: Scanner
+            self.log("\n" + "=" * 70)
+            self.log("[REFRESH] Phase 1/2: Scanning universe for 20%+ movers...")
+            self.log("=" * 70)
+            self.after(0, lambda: self.refresh_btn.configure(text="Scanning..."))
+
+            if not self._run_subprocess_with_log(
+                [sys.executable, os.path.join(jobs_dir, "scan_universe.py")],
+                timeout=1200,
+            ):
+                self.log("[REFRESH] Scan failed -- check log above for details")
+                return
+
+            # Phase 2: Analyzer
+            self.log("\n" + "=" * 70)
+            self.log("[REFRESH] Phase 2/2: Running AI analysis on movers...")
+            self.log("=" * 70)
+            self.after(0, lambda: self.refresh_btn.configure(text="Analyzing..."))
+
+            if not self._run_subprocess_with_log(
+                [sys.executable, os.path.join(jobs_dir, "analyze_movers.py")],
+                timeout=900,
+            ):
+                self.log("[REFRESH] Analysis failed -- check log above for details")
+                return
+
+            self.log("\n[REFRESH] Pipeline complete! Loading fresh data...")
+            self.after(0, lambda: self.stale_banner.grid_forget())
+            self._run_mode_autoscan()
+
         except Exception as e:
             self.log(f"[REFRESH] Error: {e}")
         finally:

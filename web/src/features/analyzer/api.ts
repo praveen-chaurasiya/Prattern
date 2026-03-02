@@ -14,6 +14,25 @@ export function getScanStatus() {
   return apiFetch<ScanStatus>('/scan/status');
 }
 
+// Scan refresh (admin — runs full pipeline)
+export function startScanRefresh() {
+  return apiFetch<{ job_id: string }>('/scan/refresh', { method: 'POST' });
+}
+
+export interface JobStatus {
+  job_id: string;
+  status: 'running' | 'complete' | 'failed';
+  progress: { stage: string; current: number; total: number; detail: string };
+  created_at: string;
+  movers_count?: number;
+  movers?: import('../../shared/types/movers').AnalyzedMover[];
+  error?: string;
+}
+
+export function pollJob(jobId: string) {
+  return apiFetch<JobStatus>(`/jobs/${jobId}`);
+}
+
 // SSE streaming
 export interface SSECallbacks {
   onProgress: (data: SSEProgress) => void;

@@ -79,7 +79,7 @@ class Config:
 
     # API Models
     CLAUDE_MODEL = "claude-sonnet-4-5-20250929"  # Used only for fallback on "Unknown" categorizations
-    GEMINI_MODEL = "models/gemini-3-flash-preview"  # Gemini 3 Flash Preview — primary analysis engine
+    GEMINI_MODEL = "gemini-2.5-flash"  # Gemini 2.5 Flash — primary analysis engine (stable)
 
     @classmethod
     def validate(cls):

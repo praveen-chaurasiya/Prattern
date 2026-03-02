@@ -2,6 +2,8 @@ export interface ThemeStock {
   ticker: string;
   change_pct: number;
   current_price: number;
+  subtheme: string;
+  role: string;
 }
 
 export interface ThemeStats {
