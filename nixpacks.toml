@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["python311", "nodejs_20"]
+
+[phases.install]
+cmds = [
+    "pip install -r requirements.txt",
+    "cd web && npm install",
+]
+
+[phases.build]
+cmds = [
+    "cd web && VITE_API_BASE_URL='' VITE_API_KEY=$PRATTERN_API_KEY npm run build",
+]
+
+[start]
+cmd = "uvicorn prattern.api.server:app --host 0.0.0.0 --port $PORT"
