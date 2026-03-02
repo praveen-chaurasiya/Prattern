@@ -1,5 +1,7 @@
 [phases.setup]
-nixPkgs = ["python311", "nodejs_20"]
+nixPkgs = ["pkgs.python311", "pkgs.nodejs-20_x", "pkgs.npm"]
+
+providers = ["python", "node"]
 
 [phases.install]
 cmds = [
@@ -9,7 +11,7 @@ cmds = [
 
 [phases.build]
 cmds = [
-    "cd web && VITE_API_BASE_URL='' VITE_API_KEY=$PRATTERN_API_KEY npm run build",
+    "cd web && VITE_API_BASE_URL='' npm run build",
 ]
 
 [start]
