@@ -8,11 +8,11 @@
 __pycache__/
 *.pyc
 
-# Generated data (regenerated daily)
-data/
+# Generated data (regenerated daily) — anchored to root to not exclude prattern/data/
+/data/
 
-# Generated output
-themes/
+# Generated output — anchored to root to not exclude prattern/features/theme_tracker/
+/themes/
 logs/
 
 # Claude Code
