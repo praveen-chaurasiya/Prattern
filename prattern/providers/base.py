@@ -1,8 +1,11 @@
 """Protocol definitions for all swappable providers."""
 
-from typing import Dict, List, Optional, Protocol
+from __future__ import annotations
 
-import pandas as pd
+from typing import TYPE_CHECKING, Dict, List, Optional, Protocol
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class UniverseProvider(Protocol):

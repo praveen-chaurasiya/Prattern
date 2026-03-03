@@ -5,16 +5,27 @@ FastAPI backend with feature-based routing.
 Run: uvicorn prattern.api.server:app --port 8000
 """
 
+import logging
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+_start = time.time()
+logging.basicConfig(level=logging.INFO)
+_log = logging.getLogger("prattern.startup")
+
+_log.info("Importing config...")
 from prattern.config import Config
+_log.info("Importing auth...")
 from prattern.api.auth import ApiKeyMiddleware
+_log.info("Importing analyzer routes...")
 from prattern.features.analyzer.routes import router as analyzer_router
+_log.info("Importing theme tracker routes...")
 from prattern.features.theme_tracker.routes import router as theme_router
+_log.info("All imports done in %.1fs", time.time() - _start)
 
 app = FastAPI(title="Prattern Stock Engine API", version="1.0.0")
 

@@ -15,10 +15,9 @@ lxml>=5.1.0
 # Environment variables management
 python-dotenv>=1.0.0
 
-# Data handling
+# Data handling (pandas/numpy pulled in by yfinance; polars is GUI-only)
 pandas>=2.2.0
 numpy>=1.26.0
-polars>=0.20.0
 
 # API server
 fastapi>=0.115.0
