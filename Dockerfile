@@ -22,5 +22,8 @@ RUN cd web && VITE_API_BASE_URL='' npm run build
 # Copy backend code
 COPY . .
 
+# Fail-fast: verify all imports resolve at build time
+RUN python -c "from prattern.api.server import app; print('Server imports OK')"
+
 # Start server
 CMD uvicorn prattern.api.server:app --host 0.0.0.0 --port ${PORT:-8000}

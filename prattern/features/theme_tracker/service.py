@@ -21,8 +21,6 @@ from pathlib import Path
 from typing import List
 from zoneinfo import ZoneInfo
 
-import exchange_calendars as ecals
-
 from prattern.features.theme_tracker.db import load_theme_db, _get_ticker_strings
 
 _ET = ZoneInfo("America/New_York")
@@ -31,15 +29,31 @@ _CACHE_TTL_OPEN = 300  # 5 minutes during market hours
 _CACHE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
 _CACHE_FILE = _CACHE_DIR / "theme_prices_cache.json"
 
-# NYSE calendar for accurate holiday detection (lazy — expensive to init)
-_nyse = None
-
-
-def _get_nyse():
-    global _nyse
-    if _nyse is None:
-        _nyse = ecals.get_calendar("XNYS")
-    return _nyse
+# NYSE holidays — refresh this set each December for the next year.
+# Replaces exchange_calendars (too heavy for containerized deploys).
+from datetime import date as _date
+_NYSE_HOLIDAYS: set[_date] = {
+    # 2026
+    _date(2026, 1, 1),   # New Year's Day
+    _date(2026, 1, 19),  # MLK Jr. Day
+    _date(2026, 2, 16),  # Presidents' Day
+    _date(2026, 4, 3),   # Good Friday
+    _date(2026, 5, 25),  # Memorial Day
+    _date(2026, 7, 3),   # Independence Day (observed)
+    _date(2026, 9, 7),   # Labor Day
+    _date(2026, 11, 26), # Thanksgiving
+    _date(2026, 12, 25), # Christmas
+    # 2027
+    _date(2027, 1, 1),   # New Year's Day
+    _date(2027, 1, 18),  # MLK Jr. Day
+    _date(2027, 2, 15),  # Presidents' Day
+    _date(2027, 3, 26),  # Good Friday
+    _date(2027, 5, 31),  # Memorial Day
+    _date(2027, 7, 5),   # Independence Day (observed)
+    _date(2027, 9, 6),   # Labor Day
+    _date(2027, 11, 25), # Thanksgiving
+    _date(2027, 12, 24), # Christmas (observed)
+}
 
 # In-memory mirror of disk cache (loaded once on first access)
 _mem_cache: dict | None = None
@@ -48,18 +62,16 @@ _mem_cache: dict | None = None
 def _is_market_open() -> bool:
     """Check if US stock market is currently in a regular trading session.
 
-    Uses NYSE calendar — handles weekends AND all holidays
-    (MLK, Presidents' Day, Good Friday, Memorial Day, July 4th,
-    Labor Day, Thanksgiving, Christmas, etc.).
+    Checks weekday (Mon-Fri) and a static NYSE holiday set.
     """
     now_et = datetime.now(_ET)
-    today_str = now_et.strftime("%Y-%m-%d")
 
-    try:
-        if not _get_nyse().is_session(today_str):
-            return False
-    except ValueError:
-        # Date out of calendar range — assume closed
+    # Weekend check (Saturday=5, Sunday=6)
+    if now_et.weekday() >= 5:
+        return False
+
+    # Holiday check
+    if now_et.date() in _NYSE_HOLIDAYS:
         return False
 
     market_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
