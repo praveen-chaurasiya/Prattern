@@ -31,8 +31,15 @@ _CACHE_TTL_OPEN = 300  # 5 minutes during market hours
 _CACHE_DIR = Path(__file__).resolve().parent.parent.parent.parent / "data"
 _CACHE_FILE = _CACHE_DIR / "theme_prices_cache.json"
 
-# NYSE calendar for accurate holiday detection
-_nyse = ecals.get_calendar("XNYS")
+# NYSE calendar for accurate holiday detection (lazy — expensive to init)
+_nyse = None
+
+
+def _get_nyse():
+    global _nyse
+    if _nyse is None:
+        _nyse = ecals.get_calendar("XNYS")
+    return _nyse
 
 # In-memory mirror of disk cache (loaded once on first access)
 _mem_cache: dict | None = None
@@ -49,7 +56,7 @@ def _is_market_open() -> bool:
     today_str = now_et.strftime("%Y-%m-%d")
 
     try:
-        if not _nyse.is_session(today_str):
+        if not _get_nyse().is_session(today_str):
             return False
     except ValueError:
         # Date out of calendar range — assume closed
