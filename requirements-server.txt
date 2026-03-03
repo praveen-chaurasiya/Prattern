@@ -1,0 +1,28 @@
+# Server-only dependencies (no GUI/desktop packages)
+
+# Stock data fetching
+yfinance>=0.2.38
+
+# AI APIs
+anthropic>=0.42.0
+google-genai>=1.0.0
+
+# Web scraping for Finviz news
+requests>=2.31.0
+beautifulsoup4>=4.12.3
+lxml>=5.1.0
+
+# Environment variables management
+python-dotenv>=1.0.0
+
+# Data handling
+pandas>=2.2.0
+numpy>=1.26.0
+polars>=0.20.0
+
+# Market calendar
+exchange_calendars>=4.5.0
+
+# API server
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0

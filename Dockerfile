@@ -8,9 +8,9 @@ RUN apt-get update && apt-get install -y curl && \
 
 WORKDIR /app
 
-# Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Python dependencies (server-only, no GUI packages like customtkinter)
+COPY requirements-server.txt .
+RUN pip install --no-cache-dir -r requirements-server.txt
 
 # Web frontend build
 COPY web/package.json web/package-lock.json* web/
