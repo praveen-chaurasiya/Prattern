@@ -15,12 +15,12 @@ export function useScanRefresh(onComplete?: () => void) {
     detail: '',
     error: null,
   });
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stop = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
-      timerRef.current = undefined;
+      timerRef.current = null;
     }
   }, []);
 
