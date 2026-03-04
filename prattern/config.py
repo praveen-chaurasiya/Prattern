@@ -66,13 +66,16 @@ class Config:
         "Other"
     ]
 
+    # Polygon.io API Key (cloud-friendly price provider)
+    POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
+
     # Auth & Deployment
     PRATTERN_API_KEY = os.getenv("PRATTERN_API_KEY")       # None = auth disabled (local dev)
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173")
 
     # Provider Selection (change these or set env vars to swap providers)
     UNIVERSE_PROVIDER = os.getenv("UNIVERSE_PROVIDER", "nasdaq")
-    PRICE_PROVIDER = os.getenv("PRICE_PROVIDER", "yfinance")
+    PRICE_PROVIDER = os.getenv("PRICE_PROVIDER", "polygon" if os.getenv("POLYGON_API_KEY") else "yfinance")
     NEWS_PROVIDER = os.getenv("NEWS_PROVIDER", "finviz")
     AI_PRIMARY_PROVIDER = os.getenv("AI_PRIMARY_PROVIDER", "gemini")
     AI_FALLBACK_PROVIDER = os.getenv("AI_FALLBACK_PROVIDER", "claude")

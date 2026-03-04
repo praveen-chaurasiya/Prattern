@@ -70,8 +70,13 @@ def _setup_factories() -> None:
         from prattern.providers.ai.claude import ClaudeClassifier
         return ClaudeClassifier()
 
+    def _make_polygon():
+        from prattern.providers.prices.polygon_provider import PolygonPriceProvider
+        return PolygonPriceProvider()
+
     _factories[("universe", "nasdaq")] = _make_nasdaq
     _factories[("prices", "yfinance")] = _make_yfinance
+    _factories[("prices", "polygon")] = _make_polygon
     _factories[("news", "finviz")] = _make_finviz
     _factories[("ai", "gemini")] = _make_gemini
     _factories[("ai", "claude")] = _make_claude
