@@ -22,3 +22,4 @@ numpy>=1.26.0
 # API server
 fastapi>=0.115.0
 uvicorn[standard]>=0.34.0
+python-multipart>=0.0.9     # File upload support for trade analyzer

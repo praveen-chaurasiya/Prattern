@@ -25,6 +25,8 @@ _log.info("Importing analyzer routes...")
 from prattern.features.analyzer.routes import router as analyzer_router
 _log.info("Importing theme tracker routes...")
 from prattern.features.theme_tracker.routes import router as theme_router
+_log.info("Importing trade analyzer routes...")
+from prattern.features.trade_analyzer.routes import router as trade_router
 _log.info("All imports done in %.1fs", time.time() - _start)
 
 app = FastAPI(title="Prattern Stock Engine API", version="1.0.0")
@@ -44,6 +46,7 @@ app.add_middleware(ApiKeyMiddleware)
 # Mount feature routers
 app.include_router(analyzer_router)
 app.include_router(theme_router)
+app.include_router(trade_router)
 
 
 # ---------------------------------------------------------------------------
