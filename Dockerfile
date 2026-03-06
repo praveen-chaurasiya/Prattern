@@ -17,7 +17,8 @@ COPY web/package.json web/package-lock.json* web/
 RUN cd web && npm install
 
 COPY web/ web/
-RUN cd web && VITE_API_BASE_URL='' npm run build
+ARG VITE_API_KEY=""
+RUN cd web && VITE_API_BASE_URL='' VITE_API_KEY=${VITE_API_KEY} npm run build
 
 # Copy backend code
 COPY . .

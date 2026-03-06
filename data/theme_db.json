@@ -1,0 +1,509 @@
+{
+  "themes": {
+    "Space": {
+      "description": "Space exploration, satellite, and launch companies",
+      "tickers": [
+        {"ticker": "RKLB", "subtheme": "Launch", "role": "Small rocket launch provider (Rocket Lab)"},
+        {"ticker": "LUNR", "subtheme": "Lunar", "role": "Lunar lander + navigation systems (Intuitive Machines)"},
+        {"ticker": "ASTS", "subtheme": "Satellite", "role": "Space-based cellular broadband (AST SpaceMobile)"},
+        {"ticker": "GSAT", "subtheme": "Satellite", "role": "Satellite communications (Globalstar)"},
+        {"ticker": "SATS", "subtheme": "Satellite", "role": "Satellite ground systems + cyber (EchoStar)"},
+        {"ticker": "OPTX", "subtheme": "Satellite", "role": "Satellite-based broadband (Syntron)"},
+        {"ticker": "SPIR", "subtheme": "Data", "role": "Space-based weather + Earth data (Spire Global)"},
+        {"ticker": "BKSY", "subtheme": "Imaging", "role": "Earth observation satellites (BlackSky)"},
+        {"ticker": "PL", "subtheme": "Imaging", "role": "Earth imaging satellite constellation (Planet Labs)"},
+        {"ticker": "SATL", "subtheme": "Satellite", "role": "Satellite infrastructure + services"},
+        {"ticker": "VOYG", "subtheme": "Data", "role": "Space data analytics (Voyager Space)"},
+        {"ticker": "FLY", "subtheme": "Satellite", "role": "Satellite operator + leasing (Fly Leasing)"},
+        {"ticker": "SIDU", "subtheme": "Manufacturing", "role": "Satellite + space hardware manufacturing (Sidus Space)"},
+        {"ticker": "RDW", "subtheme": "Infrastructure", "role": "Space structures, solar arrays, 3D printing (Redwire)"}
+      ]
+    },
+    "Cloud Computing": {
+      "description": "Cloud infrastructure and platform providers",
+      "tickers": [
+        {
+          "ticker": "AMZN",
+          "subtheme": "",
+          "role": ""
+        },
+        {
+          "ticker": "MSFT",
+          "subtheme": "",
+          "role": ""
+        },
+        {
+          "ticker": "GOOGL",
+          "subtheme": "",
+          "role": ""
+        },
+        {
+          "ticker": "CRM",
+          "subtheme": "",
+          "role": ""
+        },
+        {
+          "ticker": "SNOW",
+          "subtheme": "",
+          "role": ""
+        }
+      ]
+    },
+    "Optical Fiber": {
+      "description": "Optical fiber, AI optics, and photonics companies",
+      "tickers": [
+        {"ticker": "LITE", "subtheme": "Transceivers", "role": "Optical transceivers + photonic chips"},
+        {"ticker": "IIVI", "subtheme": "Components", "role": "Optical components + laser diodes (now Coherent)"},
+        {"ticker": "CIEN", "subtheme": "Networking", "role": "Optical networking platforms"},
+        {"ticker": "AAOI", "subtheme": "Transceivers", "role": "Fiber optic transceivers + lasers"},
+        {"ticker": "COHR", "subtheme": "Components", "role": "Optical components + laser solutions"},
+        {"ticker": "ANET", "subtheme": "Networking", "role": "High-speed network switches (optical interconnect)"},
+        {"ticker": "AXTI", "subtheme": "Materials", "role": "Compound semiconductor substrates for optics"},
+        {"ticker": "LUMN", "subtheme": "Infrastructure", "role": "Fiber network infrastructure operator"},
+        {"ticker": "GLW", "subtheme": "Materials", "role": "Optical fiber + glass manufacturer (Corning)"},
+        {"ticker": "VIAV", "subtheme": "Test & Measurement", "role": "Fiber optic test + optical filters"},
+        {"ticker": "AVGO", "subtheme": "Semiconductor", "role": "Optical semiconductor + networking ASICs"},
+        {"ticker": "LWLG", "subtheme": "Materials", "role": "Electro-optic polymer modulators"},
+        {"ticker": "CRDO", "subtheme": "Semiconductor", "role": "High-speed connectivity DSP for optics"},
+        {"ticker": "FN", "subtheme": "Components", "role": "Optical packaging + precision components"},
+        {"ticker": "POET", "subtheme": "Components", "role": "Photonic integrated circuit platform"},
+        {"ticker": "ALAB", "subtheme": "Semiconductor", "role": "Optical DSP + connectivity silicon"},
+        {"ticker": "LPTH", "subtheme": "Components", "role": "Fiber optic components + assemblies"}
+      ]
+    },
+    "Solar": {
+      "description": "Solar energy stocks — panels, inverters, installers, ETFs",
+      "tickers": [
+        {
+          "ticker": "FSLR",
+          "subtheme": "Utility-Scale",
+          "role": "Panel manufacturer (CdTe thin-film)"
+        },
+        {
+          "ticker": "ENPH",
+          "subtheme": "Residential",
+          "role": "Microinverter manufacturer"
+        },
+        {
+          "ticker": "SEDG",
+          "subtheme": "Residential",
+          "role": "String inverter + optimizer"
+        },
+        {
+          "ticker": "RUN",
+          "subtheme": "Residential",
+          "role": "Rooftop solar installer (lease/PPA)"
+        },
+        {
+          "ticker": "SHLS",
+          "subtheme": "Utility-Scale",
+          "role": "Solar tracker systems"
+        },
+        {
+          "ticker": "ARRY",
+          "subtheme": "Utility-Scale",
+          "role": "Solar tracker systems"
+        },
+        {
+          "ticker": "CSIQ",
+          "subtheme": "Utility-Scale",
+          "role": "Panel manufacturer (crystalline)"
+        },
+        {
+          "ticker": "DQ",
+          "subtheme": "Materials",
+          "role": "Polysilicon producer"
+        },
+        {
+          "ticker": "NXT",
+          "subtheme": "Utility-Scale",
+          "role": "Utility-scale solar developer + operator"
+        },
+        {
+          "ticker": "CWEN",
+          "subtheme": "Utility-Scale",
+          "role": "Clean energy yieldco (solar + wind)"
+        },
+        {
+          "ticker": "TAN",
+          "subtheme": "ETF",
+          "role": "Invesco Solar ETF"
+        },
+        {
+          "ticker": "ASTI",
+          "subtheme": "Materials",
+          "role": "Thin-film solar cell R&D"
+        },
+        {
+          "ticker": "TYGO",
+          "subtheme": "Residential",
+          "role": "Solar + energy storage installer"
+        },
+        {
+          "ticker": "TOYO",
+          "subtheme": "Materials",
+          "role": "EVA encapsulant for solar panels"
+        }
+      ]
+    },
+    "Memory Storage": {
+      "description": "Memory and data storage -- HDDs, SSDs, NAND, DRAM",
+      "tickers": [
+        {"ticker": "WDC", "subtheme": "HDD/SSD", "role": "Hard drive + SSD manufacturer"},
+        {"ticker": "STX", "subtheme": "HDD", "role": "Hard drive manufacturer"},
+        {"ticker": "SNDK", "subtheme": "Flash", "role": "Flash memory / SSD (WDC subsidiary)"},
+        {"ticker": "PSTG", "subtheme": "Enterprise", "role": "All-flash enterprise storage arrays"},
+        {"ticker": "MU", "subtheme": "Semiconductor", "role": "DRAM + NAND memory chips"}
+      ]
+    },
+    "Energy Storage": {
+      "description": "Battery tech, energy storage systems, and fuel cells",
+      "tickers": [
+        {"ticker": "NEE", "subtheme": "Utility", "role": "Renewable energy utility + storage developer"},
+        {"ticker": "GEV", "subtheme": "Grid-Scale", "role": "Grid energy storage + power electronics"},
+        {"ticker": "TSLA", "subtheme": "Battery", "role": "Megapack grid storage + EV batteries"},
+        {"ticker": "IPWR", "subtheme": "Power Electronics", "role": "Power conversion + energy management"},
+        {"ticker": "ABAT", "subtheme": "Battery", "role": "Lithium-ion battery recycling + manufacturing"},
+        {"ticker": "FLNC", "subtheme": "Grid-Scale", "role": "Utility-scale battery storage systems"},
+        {"ticker": "SES", "subtheme": "Battery R&D", "role": "Lithium-metal battery development"},
+        {"ticker": "QS", "subtheme": "Battery R&D", "role": "Solid-state battery development"},
+        {"ticker": "NEOV", "subtheme": "Battery", "role": "Lithium-ion battery packs"},
+        {"ticker": "MVST", "subtheme": "Battery", "role": "Lithium-ion battery cells + packs"},
+        {"ticker": "AMPX", "subtheme": "Battery R&D", "role": "Silicon anode battery technology"},
+        {"ticker": "BE", "subtheme": "Fuel Cell", "role": "Solid oxide fuel cell platforms"},
+        {"ticker": "SLDP", "subtheme": "Battery R&D", "role": "Solid-state lithium-metal batteries"},
+        {"ticker": "NRGV", "subtheme": "Grid-Scale", "role": "Grid-scale energy storage solutions"},
+        {"ticker": "EOSE", "subtheme": "Grid-Scale", "role": "Zinc-based grid storage batteries"},
+        {"ticker": "TE", "subtheme": "Components", "role": "Connectors + sensors for energy systems"}
+      ]
+    },
+    "Nuclear": {
+      "description": "Uranium miners, nuclear fuel, and reactor developers",
+      "tickers": [
+        {"ticker": "UUUU", "subtheme": "Uranium Miner", "role": "Uranium + rare earth miner"},
+        {"ticker": "UEC", "subtheme": "Uranium Miner", "role": "In-situ uranium mining"},
+        {"ticker": "SMR", "subtheme": "Reactor", "role": "Small modular reactor developer (NuScale)"},
+        {"ticker": "OKLO", "subtheme": "Reactor", "role": "Advanced fission reactor developer"},
+        {"ticker": "LTBR", "subtheme": "Fuel", "role": "Nuclear fuel technology (thorium + HALEU)"},
+        {"ticker": "LEU", "subtheme": "Fuel", "role": "Uranium enrichment (HALEU producer)"},
+        {"ticker": "IMSR", "subtheme": "Reactor", "role": "Molten salt reactor developer (Terrestrial Energy)"},
+        {"ticker": "DNN", "subtheme": "Uranium Miner", "role": "Uranium exploration + development"},
+        {"ticker": "CCJ", "subtheme": "Uranium Miner", "role": "Largest Western uranium producer (Cameco)"},
+        {"ticker": "SOLS", "subtheme": "Fuel", "role": "Only US uranium conversion plant, UF6 producer (Solstice)"}
+      ]
+    },
+    "Robotics": {
+      "description": "Robotics, automation, and autonomous systems",
+      "tickers": [
+        {"ticker": "HON", "subtheme": "Industrial", "role": "Industrial automation + warehouse robotics"},
+        {"ticker": "ISRG", "subtheme": "Surgical", "role": "Surgical robotics (da Vinci systems)"},
+        {"ticker": "TSLA", "subtheme": "Humanoid", "role": "Optimus humanoid robot + autonomous driving"},
+        {"ticker": "SERV", "subtheme": "Service", "role": "Autonomous delivery robots (Serve Robotics)"},
+        {"ticker": "SYM", "subtheme": "Warehouse", "role": "AI-powered warehouse automation"},
+        {"ticker": "RR", "subtheme": "Industrial", "role": "Robotics + automation systems"}
+      ]
+    },
+    "Semiconductor": {
+      "description": "Chip designers, foundries, and semiconductor companies",
+      "tickers": [
+        {"ticker": "NVDA", "subtheme": "GPU", "role": "GPU + AI accelerator designer"},
+        {"ticker": "AMD", "subtheme": "CPU/GPU", "role": "CPU + GPU + data center chips"},
+        {"ticker": "INTC", "subtheme": "IDM", "role": "CPU manufacturer + foundry (Intel)"},
+        {"ticker": "AVGO", "subtheme": "Networking", "role": "Networking + custom ASICs (Broadcom)"},
+        {"ticker": "QCOM", "subtheme": "Mobile", "role": "Mobile SoC + RF chips (Qualcomm)"},
+        {"ticker": "TSM", "subtheme": "Foundry", "role": "Leading-edge chip foundry (TSMC)"},
+        {"ticker": "ARM", "subtheme": "IP", "role": "CPU architecture IP licensing"},
+        {"ticker": "MRVL", "subtheme": "Networking", "role": "Data infrastructure + custom silicon (Marvell)"},
+        {"ticker": "CRDO", "subtheme": "Connectivity", "role": "High-speed connectivity DSP"},
+        {"ticker": "ALAB", "subtheme": "Connectivity", "role": "Optical DSP + connectivity silicon (Astera Labs)"},
+        {"ticker": "ALGM", "subtheme": "Analog", "role": "Magnetic sensors + power ICs (Allegro)"},
+        {"ticker": "NVTS", "subtheme": "Power", "role": "GaN power semiconductors (Navitas)"},
+        {"ticker": "VLN", "subtheme": "Connectivity", "role": "High-speed connectivity chips (Valens)"},
+        {"ticker": "SKYT", "subtheme": "Foundry", "role": "US-based specialty foundry (SkyWater)"},
+        {"ticker": "GSIT", "subtheme": "Memory", "role": "SRAM + in-memory compute chips"},
+        {"ticker": "CLS", "subtheme": "Manufacturing", "role": "Electronics manufacturing services (Celestica)"},
+        {"ticker": "AXTI", "subtheme": "Materials", "role": "Compound semiconductor substrates"}
+      ]
+    },
+    "Semiconductor Equipment": {
+      "description": "Chip fabrication equipment, test, and lithography",
+      "tickers": [
+        {"ticker": "ASML", "subtheme": "Lithography", "role": "EUV lithography systems"},
+        {"ticker": "AMAT", "subtheme": "Deposition", "role": "Deposition + etch + CMP equipment (Applied Materials)"},
+        {"ticker": "LRCX", "subtheme": "Etch", "role": "Etch + deposition systems (Lam Research)"},
+        {"ticker": "KLAC", "subtheme": "Inspection", "role": "Wafer inspection + process control (KLA)"},
+        {"ticker": "TER", "subtheme": "Test", "role": "Semiconductor test equipment (Teradyne)"},
+        {"ticker": "ACMR", "subtheme": "Cleaning", "role": "Wafer cleaning equipment (ACM Research)"},
+        {"ticker": "PLAB", "subtheme": "Photomasks", "role": "Photomask manufacturing (Photronics)"},
+        {"ticker": "FORM", "subtheme": "Test", "role": "Probe cards for wafer testing (FormFactor)"},
+        {"ticker": "UCTT", "subtheme": "Cleaning", "role": "Gas delivery & wafer cleaning (Ultra Clean)"},
+        {"ticker": "ICHR", "subtheme": "Subsystems", "role": "Gas & chemical delivery subsystems (Ichor)"},
+        {"ticker": "ENTG", "subtheme": "Materials", "role": "Contamination control & advanced materials (Entegris)"},
+        {"ticker": "KLIC", "subtheme": "Packaging", "role": "Wire bonding & die attach equipment (K&S)"}
+      ]
+    },
+    "Software": {
+      "description": "Cloud software, SaaS, and application platforms",
+      "tickers": [
+        {"ticker": "DOCN", "subtheme": "Cloud Infra", "role": "Cloud hosting for developers (DigitalOcean)"},
+        {"ticker": "PATH", "subtheme": "Automation", "role": "Enterprise RPA + AI automation (UiPath)"},
+        {"ticker": "APP", "subtheme": "AdTech", "role": "Mobile app monetization + marketing (AppLovin)"},
+        {"ticker": "SNOW", "subtheme": "Data", "role": "Cloud data platform + analytics (Snowflake)"},
+        {"ticker": "RZLV", "subtheme": "AI", "role": "AI-powered enterprise software (Rezolve)"},
+        {"ticker": "DDOG", "subtheme": "Observability", "role": "Cloud monitoring + security (Datadog)"},
+        {"ticker": "VERI", "subtheme": "AI", "role": "AI-powered ad + content analytics (Veritone)"},
+        {"ticker": "U", "subtheme": "3D/Gaming", "role": "3D engine + real-time platform (Unity)"},
+        {"ticker": "BKKT", "subtheme": "Fintech", "role": "Digital asset + loyalty platform (Bakkt)"}
+      ]
+    },
+    "Copper": {
+      "description": "Copper miners and producers",
+      "tickers": [
+        {"ticker": "FCX", "subtheme": "Major", "role": "Largest public copper miner (Freeport-McMoRan)"},
+        {"ticker": "SCCO", "subtheme": "Major", "role": "Copper + silver miner (Southern Copper)"},
+        {"ticker": "TECK", "subtheme": "Diversified", "role": "Copper + zinc miner (Teck Resources)"},
+        {"ticker": "HBM", "subtheme": "Mid-Tier", "role": "Copper + gold miner (Hudbay Minerals)"},
+        {"ticker": "ERO", "subtheme": "Mid-Tier", "role": "Copper miner in Brazil (Ero Copper)"},
+        {"ticker": "TMQ", "subtheme": "Junior", "role": "Copper-gold explorer (Trilogy Metals)"},
+        {"ticker": "NAK", "subtheme": "Development", "role": "Pebble copper-gold deposit (Northern Dynasty)"}
+      ]
+    },
+    "Gold": {
+      "description": "Gold miners, royalties, and ETFs",
+      "tickers": [
+        {"ticker": "AU", "subtheme": "Major", "role": "Major gold miner (Barrick Gold)"},
+        {"ticker": "GFI", "subtheme": "Major", "role": "Major gold miner (Gold Fields)"},
+        {"ticker": "AEM", "subtheme": "Major", "role": "Senior gold producer (Agnico Eagle)"},
+        {"ticker": "IAG", "subtheme": "Mid-Tier", "role": "Gold miner in Americas (IAMGOLD)"},
+        {"ticker": "EQX", "subtheme": "Mid-Tier", "role": "Gold producer in Americas (Equinox Gold)"},
+        {"ticker": "CGAU", "subtheme": "Mid-Tier", "role": "Gold miner (Centerra Gold)"},
+        {"ticker": "NG", "subtheme": "Mid-Tier", "role": "Gold producer in Nevada + Canada (NovaGold)"},
+        {"ticker": "NVA", "subtheme": "Junior", "role": "Gold + antimony explorer in Alaska (Nova Minerals)"},
+        {"ticker": "HYMC", "subtheme": "Development", "role": "Gold + silver mine restart (Hycroft Mining)"},
+        {"ticker": "GROY", "subtheme": "Royalty", "role": "Gold royalties + streaming (Gold Royalty Corp)"},
+        {"ticker": "GLD", "subtheme": "ETF", "role": "SPDR Gold Shares ETF"},
+        {"ticker": "GDX", "subtheme": "ETF", "role": "VanEck Gold Miners ETF"},
+        {"ticker": "CDE", "subtheme": "Mid-Tier", "role": "Gold-silver producer (Coeur Mining, 65% gold revenue)"}
+      ]
+    },
+    "Silver": {
+      "description": "Silver miners and streaming companies",
+      "tickers": [
+        {"ticker": "HL", "subtheme": "Major", "role": "Largest US silver producer (Hecla Mining)"},
+        {"ticker": "WPM", "subtheme": "Streaming", "role": "Precious metals streamer, silver-focused (Wheaton)"}
+      ]
+    },
+    "Mega Caps": {
+      "description": "Largest US tech companies by market cap",
+      "tickers": [
+        {"ticker": "AAPL", "subtheme": "Consumer", "role": "iPhone, Mac, Services (Apple)"},
+        {"ticker": "MSFT", "subtheme": "Enterprise", "role": "Cloud, OS, AI (Microsoft)"},
+        {"ticker": "NVDA", "subtheme": "Semiconductor", "role": "GPU + AI accelerators (Nvidia)"},
+        {"ticker": "AMZN", "subtheme": "E-Commerce/Cloud", "role": "Retail + AWS cloud (Amazon)"},
+        {"ticker": "GOOG", "subtheme": "Ads/Cloud", "role": "Search, ads, cloud (Alphabet)"},
+        {"ticker": "META", "subtheme": "Social/AI", "role": "Social media + AI + metaverse (Meta)"},
+        {"ticker": "TSLA", "subtheme": "EV/AI", "role": "EVs, energy, autonomy, robotics (Tesla)"},
+        {"ticker": "NFLX", "subtheme": "Streaming", "role": "Streaming entertainment (Netflix)"},
+        {"ticker": "AVGO", "subtheme": "Semiconductor", "role": "Networking ASICs + AI chips (Broadcom)"},
+        {"ticker": "LLY", "subtheme": "Pharma", "role": "GLP-1, oncology, mega cap pharma (Eli Lilly)"}
+      ]
+    },
+    "Thermal & Cooling": {
+      "description": "HVAC, data center cooling, thermal management, and insulation",
+      "tickers": [
+        {"ticker": "CARR", "subtheme": "HVAC", "role": "HVAC + refrigeration systems (Carrier Global)"},
+        {"ticker": "TT", "subtheme": "HVAC", "role": "Climate control + HVAC (Trane Technologies)"},
+        {"ticker": "AAON", "subtheme": "HVAC", "role": "Commercial HVAC equipment manufacturer"},
+        {"ticker": "JCI", "subtheme": "HVAC", "role": "Building automation + HVAC (Johnson Controls)"},
+        {"ticker": "VRT", "subtheme": "Data Center", "role": "Data center cooling + power (Vertiv)"},
+        {"ticker": "MOD", "subtheme": "Thermal Mgmt", "role": "Thermal management solutions (Modine)"},
+        {"ticker": "NVT", "subtheme": "Thermal Mgmt", "role": "Thermal management + enclosures (nVent)"},
+        {"ticker": "ASPN", "subtheme": "Insulation", "role": "Aerogel thermal insulation (Aspen Aerogels)"},
+        {"ticker": "EMR", "subtheme": "Controls", "role": "Automation + HVAC controls (Emerson)"},
+        {"ticker": "PWR", "subtheme": "Infrastructure", "role": "Power + data center infrastructure (Quanta)"},
+        {"ticker": "WTS", "subtheme": "Water/HVAC", "role": "Water management + HVAC flow control (Watts)"},
+        {"ticker": "AOSL", "subtheme": "Power Semi", "role": "Power MOSFETs for thermal management (Alpha & Omega)"},
+        {"ticker": "SOLS", "subtheme": "Refrigerants", "role": "Data center cooling refrigerants (Solstice)"}
+      ]
+    },
+    "Grid Infrastructure": {
+      "description": "Transmission lines, electrical construction, and grid modernization",
+      "tickers": [
+        {"ticker": "PWR", "subtheme": "T&D Construction", "role": "Transmission line + grid construction (Quanta)"},
+        {"ticker": "MTZ", "subtheme": "T&D Construction", "role": "Power infrastructure construction (MasTec)"},
+        {"ticker": "MYRG", "subtheme": "T&D Construction", "role": "Electrical construction + T&D lines (MYR Group)"},
+        {"ticker": "PRIM", "subtheme": "T&D Construction", "role": "T&D engineering + construction (Primoris)"},
+        {"ticker": "EME", "subtheme": "T&D Construction", "role": "Electrical + substation construction (EMCOR)"},
+        {"ticker": "GEV", "subtheme": "Equipment", "role": "Power transformers, switchgear, grid automation (GE Vernova)"},
+        {"ticker": "ITRI", "subtheme": "Smart Grid", "role": "Smart meters, AMI, grid edge software (Itron)"},
+        {"ticker": "HUBB", "subtheme": "Equipment", "role": "Distribution transformers + grid hardware (Hubbell)"},
+        {"ticker": "ETN", "subtheme": "Equipment", "role": "Switchgear + distribution equipment (Eaton)"},
+        {"ticker": "VMI", "subtheme": "Structures", "role": "Transmission towers + utility poles (Valmont)"}
+      ]
+    },
+    "Digital Infrastructure": {
+      "description": "Crypto miners pivoting to AI/HPC data center hosting",
+      "tickers": [
+        {"ticker": "APLD", "subtheme": "HPC", "role": "AI/HPC data center hosting (Applied Digital)"},
+        {"ticker": "CIFR", "subtheme": "Mining", "role": "Bitcoin mining + data center ops (Cipher Mining)"},
+        {"ticker": "IREN", "subtheme": "HPC", "role": "Bitcoin mining + AI/HPC data centers (Iris Energy)"},
+        {"ticker": "WULF", "subtheme": "Mining", "role": "Nuclear-powered Bitcoin mining (TeraWulf)"},
+        {"ticker": "PUMP", "subtheme": "Power", "role": "Data center power via PROPWR division (ProPetro)"},
+        {"ticker": "CRWV", "subtheme": "HPC", "role": "AI/GPU cloud infrastructure (CoreWeave)"},
+        {"ticker": "NBIS", "subtheme": "HPC", "role": "AI infrastructure + GPU clusters (Nebius, ex-Yandex)"}
+      ]
+    },
+    "Quantum Computing": {
+      "description": "Quantum hardware, software, and computing platforms",
+      "tickers": [
+        {"ticker": "IONQ", "subtheme": "Hardware", "role": "Trapped-ion quantum computers (IonQ)"},
+        {"ticker": "RGTI", "subtheme": "Hardware", "role": "Superconducting quantum processors (Rigetti)"},
+        {"ticker": "QBTS", "subtheme": "Hardware", "role": "Gate-based quantum computing (D-Wave)"},
+        {"ticker": "QUBT", "subtheme": "Software", "role": "Quantum optimization software (Quantum Computing Inc)"}
+      ]
+    },
+    "Quantum Cybersecurity": {
+      "description": "Post-quantum cryptography, quantum-resistant chips, and secure identity",
+      "tickers": [
+        {"ticker": "WKEY", "subtheme": "Identity", "role": "Quantum-resistant digital identity + IoT security (WISeKey)"},
+        {"ticker": "LAES", "subtheme": "Hardware", "role": "Post-quantum secure chips + TPMs (SEALSQ)"}
+      ]
+    },
+    "Rare Earth & Critical Minerals": {
+      "description": "Rare earth miners, critical minerals, and strategic metals",
+      "tickers": [
+        {"ticker": "MP", "subtheme": "Rare Earth", "role": "US rare earth mine + magnet manufacturing (MP Materials)"},
+        {"ticker": "USAR", "subtheme": "Rare Earth", "role": "Rare earth mining + neodymium magnets (USA Rare Earth)"},
+        {"ticker": "NB", "subtheme": "Niobium", "role": "Niobium + scandium + rare earths (NioCorp)"},
+        {"ticker": "AREC", "subtheme": "Rare Earth", "role": "Rare earth extraction from coal waste (American Resources)"},
+        {"ticker": "CRML", "subtheme": "Rare Earth", "role": "Rare earth + lithium deposits (Critical Metals)"},
+        {"ticker": "UAMY", "subtheme": "Antimony", "role": "Antimony mining + processing (US Antimony)"},
+        {"ticker": "TMC", "subtheme": "Deep-Sea", "role": "Deep-sea cobalt, nickel, manganese nodules (The Metals Co)"},
+        {"ticker": "REMX", "subtheme": "ETF", "role": "VanEck Rare Earth + Strategic Metals ETF"}
+      ]
+    },
+    "Natural Gas": {
+      "description": "Natural gas producers, pipelines, LNG, and gas-powered infrastructure",
+      "tickers": [
+        {"ticker": "EQT", "subtheme": "Producer", "role": "Largest US natural gas producer (Appalachian Basin)"},
+        {"ticker": "EXE", "subtheme": "Producer", "role": "Gas producer Marcellus + Haynesville (Expand Energy)"},
+        {"ticker": "AR", "subtheme": "Producer", "role": "Gas producer Appalachian Basin (Antero Resources)"},
+        {"ticker": "RRC", "subtheme": "Producer", "role": "Gas producer Marcellus Shale (Range Resources)"},
+        {"ticker": "WMB", "subtheme": "Pipeline", "role": "33K miles of gas pipelines (Williams Companies)"},
+        {"ticker": "KMI", "subtheme": "Pipeline", "role": "83K miles of pipelines + terminals (Kinder Morgan)"},
+        {"ticker": "ET", "subtheme": "Pipeline", "role": "Gas pipelines + storage (Energy Transfer)"},
+        {"ticker": "VG", "subtheme": "LNG", "role": "LNG export from Gulf Coast (Venture Global)"},
+        {"ticker": "NUAI", "subtheme": "Producer", "role": "Gas E&P + pivoting to AI data centers (New Era Energy)"},
+        {"ticker": "PROP", "subtheme": "Producer", "role": "Gas E&P Denver-Julesburg Basin (Prairie Operating)"},
+        {"ticker": "BW", "subtheme": "Infrastructure", "role": "Gas-fired boilers for data centers, 1GW APLD contract (Babcock & Wilcox)"},
+        {"ticker": "UNG", "subtheme": "ETF", "role": "US Natural Gas Fund (futures ETF)"}
+      ]
+    },
+    "UAV & Drones": {
+      "description": "Unmanned aerial vehicles, drone manufacturers, and autonomous flight",
+      "tickers": [
+        {"ticker": "UMAC", "subtheme": "Defense", "role": "FPV drone components & systems supplier"},
+        {"ticker": "RCAT", "subtheme": "Defense", "role": "Tactical military drone manufacturer"},
+        {"ticker": "ONDS", "subtheme": "Defense", "role": "Autonomous drone & counter-UAS developer"},
+        {"ticker": "KTOS", "subtheme": "Defense", "role": "Collaborative combat aircraft platform designer"},
+        {"ticker": "JOBY", "subtheme": "eVTOL", "role": "Electric air taxi developer (passenger)"},
+        {"ticker": "HOVR", "subtheme": "eVTOL", "role": "Hybrid-electric VTOL aircraft designer"},
+        {"ticker": "DPRO", "subtheme": "Commercial", "role": "Professional multirotor drone manufacturer"},
+        {"ticker": "ACHR", "subtheme": "eVTOL", "role": "Electric air taxi developer (passenger)"}
+      ]
+    },
+    "Oil & Oil Equipment": {
+      "description": "Oil producers, drillers, and oilfield services/equipment",
+      "tickers": [
+        {"ticker": "BORR", "subtheme": "Driller", "role": "Offshore jackup drilling rig operator"},
+        {"ticker": "BTE", "subtheme": "Producer", "role": "Canadian crude oil & natural gas producer"},
+        {"ticker": "OVV", "subtheme": "Producer", "role": "Multi-basin E&P operator (US/Canada)"},
+        {"ticker": "VG", "subtheme": "Producer", "role": "Low-cost US LNG export facility operator"},
+        {"ticker": "SND", "subtheme": "Equipment", "role": "Frac sand & proppant producer/supplier"},
+        {"ticker": "RIG", "subtheme": "Driller", "role": "Offshore ultra-deepwater rig contractor"},
+        {"ticker": "PTEN", "subtheme": "Services", "role": "Onshore drilling & completion services"},
+        {"ticker": "HAL", "subtheme": "Services", "role": "Integrated oilfield services & solutions"},
+        {"ticker": "SLB", "subtheme": "Services", "role": "Global oilfield services & technology leader"},
+        {"ticker": "SEI", "subtheme": "Equipment", "role": "Power generation & logistics for energy"},
+        {"ticker": "TTI", "subtheme": "Services", "role": "Completion fluids & water management"}
+      ]
+    },
+    "Electronic Equipment": {
+      "description": "Electronic components, connectors, PCBs, and manufacturing services",
+      "tickers": [
+        {"ticker": "RFIL", "subtheme": "Connectors", "role": "RF cable assemblies and connectors"},
+        {"ticker": "AVT", "subtheme": "Distribution", "role": "Electronics components distributor"},
+        {"ticker": "CLS", "subtheme": "Manufacturing", "role": "Electronics manufacturing services (EMS)"},
+        {"ticker": "APH", "subtheme": "Connectors", "role": "Electrical and fiber optic connectors"},
+        {"ticker": "OPTX", "subtheme": "Components", "role": "Optics and photonics components"},
+        {"ticker": "TTMI", "subtheme": "PCB", "role": "PCB manufacturer and RF components"},
+        {"ticker": "SANM", "subtheme": "Manufacturing", "role": "Electronics manufacturing services (EMS)"}
+      ]
+    },
+    "Retail": {
+      "description": "Consumer retail — apparel, e-commerce, department stores",
+      "tickers": [
+        {"ticker": "REAL", "subtheme": "E-Commerce", "role": "Online luxury consignment (The RealReal)"},
+        {"ticker": "ANF", "subtheme": "Apparel", "role": "Abercrombie & Fitch retail chain"},
+        {"ticker": "AS", "subtheme": "Apparel", "role": "Athleisure brand retailer (Amer Sports)"},
+        {"ticker": "BBWI", "subtheme": "Specialty", "role": "Bath & body care retail (Bath & Body Works)"},
+        {"ticker": "WRBY", "subtheme": "Eyewear", "role": "DTC eyewear brand (Warby Parker)"},
+        {"ticker": "UAA", "subtheme": "Apparel", "role": "Athletic performance apparel (Under Armour)"},
+        {"ticker": "W", "subtheme": "E-Commerce", "role": "Online home goods marketplace (Wayfair)"},
+        {"ticker": "DBI", "subtheme": "Footwear", "role": "Shoe retail chain (Designer Brands / DSW)"},
+        {"ticker": "KSS", "subtheme": "Department", "role": "Department store chain (Kohl's)"}
+      ]
+    },
+    "Fintech": {
+      "description": "Financial technology — lending, trading, payments, BNPL",
+      "tickers": [
+        {"ticker": "RKT", "subtheme": "Lending", "role": "Online mortgage lending platform (Rocket)"},
+        {"ticker": "WT", "subtheme": "Infrastructure", "role": "Embedded finance API platform (WisdomTree)"},
+        {"ticker": "HOOD", "subtheme": "Trading", "role": "Commission-free trading app (Robinhood)"},
+        {"ticker": "AFRM", "subtheme": "BNPL", "role": "Buy now pay later platform (Affirm)"},
+        {"ticker": "BLNE", "subtheme": "Lending", "role": "Fintech mortgage lending platform (Beeline)"}
+      ]
+    },
+    "Defense AI & Edge": {
+      "description": "AI edge computing, directed energy, and defense tech platforms",
+      "tickers": [
+        {"ticker": "OSS", "subtheme": "Edge Computing", "role": "Rugged AI edge compute for military (One Stop Systems)"},
+        {"ticker": "LASR", "subtheme": "Directed Energy", "role": "High-power lasers for defense & aerospace (nLIGHT)"},
+        {"ticker": "PLTR", "subtheme": "AI Platform", "role": "Defense AI analytics & decision platform (Palantir)"},
+        {"ticker": "BBAI", "subtheme": "AI Platform", "role": "AI/ML solutions for defense & intel (BigBear.ai)"},
+        {"ticker": "LDOS", "subtheme": "IT Services", "role": "Defense IT & digital modernization (Leidos)"},
+        {"ticker": "BWXT", "subtheme": "Nuclear", "role": "Nuclear propulsion & defense components (BWX Tech)"}
+      ]
+    },
+    "Autonomous Driving": {
+      "description": "Self-driving vehicles, LiDAR sensors, and autonomous platforms",
+      "tickers": [
+        {"ticker": "PONY", "subtheme": "Robotaxi", "role": "Autonomous driving robotaxi platform (Pony.ai)"},
+        {"ticker": "PDYN", "subtheme": "ADAS", "role": "Driver safety AI platform (Paladin AI)"},
+        {"ticker": "AUR", "subtheme": "Trucking", "role": "Self-driving trucks & ride-hail (Aurora)"},
+        {"ticker": "AEVA", "subtheme": "LiDAR", "role": "4D LiDAR sensors for autonomy (Aeva)"},
+        {"ticker": "OUST", "subtheme": "LiDAR", "role": "Digital LiDAR sensors for AV & robotics (Ouster)"}
+      ]
+    },
+    "Lithium Miners": {
+      "description": "Lithium mining, extraction, and production for EV batteries",
+      "tickers": [
+        {"ticker": "LAR", "subtheme": "Junior", "role": "Lithium exploration & development (Latin Resources)"},
+        {"ticker": "LAC", "subtheme": "Development", "role": "Thacker Pass lithium project (Lithium Americas)"},
+        {"ticker": "SQM", "subtheme": "Major", "role": "Chilean lithium & specialty chemicals (SQM)"},
+        {"ticker": "ALB", "subtheme": "Major", "role": "Global lithium producer & refiner (Albemarle)"},
+        {"ticker": "SGML", "subtheme": "Development", "role": "Direct lithium extraction tech (Sigma Lithium)"}
+      ]
+    },
+    "Chemicals": {
+      "description": "Specialty and commodity chemicals, titanium dioxide, and renewable fuels",
+      "tickers": [
+        {"ticker": "CC", "subtheme": "Specialty", "role": "Titanium dioxide & fluoroproducts (Chemours)"},
+        {"ticker": "TROX", "subtheme": "Specialty", "role": "Titanium dioxide pigment producer (Tronox)"},
+        {"ticker": "DOW", "subtheme": "Commodity", "role": "Diversified commodity chemicals (Dow)"},
+        {"ticker": "GEVO", "subtheme": "Renewable", "role": "Sustainable aviation fuel & renewable chemicals (Gevo)"}
+      ]
+    }
+  },
+  "last_updated": "2026-02-28"
+}

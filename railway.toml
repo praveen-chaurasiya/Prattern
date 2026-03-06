@@ -1,6 +1,7 @@
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
+dockerBuildArgs = ["VITE_API_KEY"]
 
 [deploy]
 startCommand = "python start.py"
