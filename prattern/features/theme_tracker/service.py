@@ -148,8 +148,11 @@ def _fetch_theme_prices(tickers: List[str], period: str) -> dict:
     else:
         period_data = cached_data
 
-    # Step 1: Has cache + market closed → return instantly
-    if period_data and not market_open:
+    # Step 1: Has cache + market closed + cache is from today → return instantly
+    # If cache is from a previous day, fall through to fetch fresh closing prices
+    cache_date = datetime.fromtimestamp(cached_ts, tz=_ET).date() if cached_ts else None
+    today = datetime.now(_ET).date()
+    if period_data and not market_open and cache_date == today:
         return period_data
 
     # Step 2: Has cache + market open + fresh → return instantly

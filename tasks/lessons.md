@@ -114,6 +114,56 @@
 
 ---
 
+### [L-010] Unanchored .gitignore patterns excluded Python packages from repo
+**Date:** 2026-03-03
+**Category:** Deployment
+**Trigger:** Railway deploy failed with `ModuleNotFoundError: No module named 'prattern.data'` — build-time import check caught it
+**Root cause:** `.gitignore` had unanchored `data/` and `themes/` patterns. Git's pattern matching applies at any directory level, so `data/` excluded both the root-level `data/` (runtime JSON, correctly ignored) AND `prattern/data/` (Python package with `precomputed.py`, `prices.py`, etc.). The files existed locally but were never committed to git, so Railway's clone didn't have them.
+**Rule:** `.gitignore` patterns for top-level directories MUST be anchored with a leading slash (`/data/`, `/themes/`). Before adding any directory to `.gitignore`, verify it won't accidentally match a same-named directory nested inside `prattern/`. After editing `.gitignore`, run `git ls-files prattern/` to confirm all package files are tracked.
+**Files affected:** `.gitignore`, `.dockerignore`, `prattern/data/*.py`
+
+---
+
+### [L-011] Same anchoring rule applies to .dockerignore
+**Date:** 2026-03-03
+**Category:** Deployment
+**Trigger:** Same as L-010 — `.dockerignore` had `data/` which excluded `prattern/data/` from the Docker build context
+**Root cause:** Copied the `.gitignore` pattern without anchoring
+**Rule:** `.dockerignore` patterns must follow the same anchoring rules as `.gitignore`. Any directory exclusion that should only match the repo root must use `/dir/` not `dir/`.
+**Files affected:** `.dockerignore`
+
+---
+
+### [L-012] exchange_calendars is too heavy for containerized deploys
+**Date:** 2026-03-03
+**Category:** Deployment
+**Trigger:** Railway container never became healthy — 60s+ import time or OOM from `exchange_calendars`
+**Root cause:** `exchange_calendars` loads calendar data for every global exchange at import time. On small containers (512MB), this either OOMs or takes too long for the health check window.
+**Rule:** Never use `exchange_calendars` in server-side code. Use a static holiday set (`_NYSE_HOLIDAYS` in `service.py`) for NYSE holiday detection — refresh each December for the next year. If accurate global exchange calendars are ever needed, use a lightweight alternative or an API.
+**Files affected:** `prattern/features/theme_tracker/service.py`, `requirements-server.txt`
+
+---
+
+### [L-013] polars is GUI-only — never include in server requirements
+**Date:** 2026-03-03
+**Category:** Deployment
+**Trigger:** Unnecessary memory usage in Railway container
+**Root cause:** `polars` was in `requirements-server.txt` but is only used in `gui/pratten_app.py`. Heavy packages that aren't needed server-side waste memory and slow container startup.
+**Rule:** `requirements-server.txt` must only contain packages actually imported by server code paths (`prattern/api/`, `prattern/features/`, `prattern/providers/`, `prattern/data/`). GUI-only packages (`customtkinter`, `polars`) belong only in `requirements.txt`.
+**Files affected:** `requirements-server.txt`, `requirements.txt`
+
+---
+
+### [L-014] Always add a build-time import check and startup diagnostics for containerized deploys
+**Date:** 2026-03-03
+**Category:** Deployment
+**Trigger:** Railway deploys failed silently — no logs, just "service unavailable" health check failures
+**Root cause:** Import errors and crashes happened at runtime with no diagnostic output. Without `flush=True` on print statements, Python buffers stdout and logs never reach Railway.
+**Rule:** The Dockerfile must include `RUN python -c "from prattern.api.server import app"` after `COPY . .` to catch import failures at build time. The server must start via `start.py` wrapper that prints diagnostics (Python version, PORT, import timing) with `flush=True` before launching uvicorn. Never use bare `uvicorn` as the start command in production — always use the wrapper.
+**Files affected:** `Dockerfile`, `start.py`, `railway.toml`
+
+---
+
 ## Recurring Patterns (Quick Reference)
 
 | # | Rule | File(s) |
@@ -127,6 +177,11 @@
 | L-007 | Lazy-import heavy libs (yfinance, etc.) — never at module top | All provider/service files |
 | L-008 | Stub darkdetect before importing customtkinter on Python 3.14 | `gui/pratten_app.py` |
 | L-009 | Provider registry must lazy-import — never eagerly load all providers | `prattern/providers/__init__.py` |
+| L-010 | Anchor `.gitignore` patterns with `/` — `data/` matches everywhere, `/data/` matches root only | `.gitignore` |
+| L-011 | Same anchoring rule for `.dockerignore` | `.dockerignore` |
+| L-012 | Never use `exchange_calendars` server-side — use static holiday set | `service.py`, `requirements-server.txt` |
+| L-013 | `requirements-server.txt` = server-only deps. No GUI packages (polars, customtkinter) | `requirements-server.txt` |
+| L-014 | Dockerfile must have build-time import check + `start.py` wrapper with `flush=True` | `Dockerfile`, `start.py`, `railway.toml` |
 
 ---
 

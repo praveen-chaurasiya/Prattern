@@ -7,8 +7,9 @@ import subprocess
 import sys
 import threading
 import uuid
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Dict
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -17,6 +18,38 @@ from prattern.data.precomputed import load_precomputed_movers, load_precomputed_
 from prattern.features.analyzer.orchestrator import analyze_all_movers
 
 router = APIRouter()
+
+# Reuse NYSE holidays from theme tracker service
+from prattern.features.theme_tracker.service import _NYSE_HOLIDAYS
+
+_ET = ZoneInfo("America/New_York")
+
+
+def _last_trading_date() -> date:
+    """Return the most recent completed trading day (ET timezone)."""
+    now_et = datetime.now(_ET)
+    d = now_et.date()
+
+    # If before market close (4 PM ET), the last completed session is yesterday
+    if now_et.hour < 16:
+        d -= timedelta(days=1)
+
+    # Walk back past weekends and holidays
+    while d.weekday() >= 5 or d in _NYSE_HOLIDAYS:
+        d -= timedelta(days=1)
+    return d
+
+
+def _is_data_stale(scan_date_str: str) -> bool:
+    """Data is stale only if a trading session has completed since the scan."""
+    if not scan_date_str:
+        return True
+    try:
+        scan_date = date.fromisoformat(scan_date_str)
+    except ValueError:
+        return True
+    return scan_date < _last_trading_date()
+
 
 # In-memory job store for polling pattern
 _jobs: Dict[str, dict] = {}
@@ -46,7 +79,11 @@ def get_latest_analysis():
 
 @router.get("/scan/status")
 def get_scan_status():
-    """Return scan metadata + staleness info."""
+    """Return scan metadata + staleness info.
+
+    Data is only stale if a full trading session has passed since the scan.
+    E.g., a Friday 5 PM scan is still fresh on Saturday/Sunday.
+    """
     movers_data = load_precomputed_movers()
     analysis_data = load_precomputed_analysis()
     today = datetime.now().strftime("%Y-%m-%d")
@@ -60,7 +97,7 @@ def get_scan_status():
             "scan_time": movers_data.get("scan_time", ""),
             "universe_size": movers_data.get("universe_size"),
             "movers_count": len(movers_data.get("movers", [])),
-            "is_stale": scan_date != today,
+            "is_stale": _is_data_stale(scan_date),
         }
 
     if analysis_data:
@@ -70,7 +107,7 @@ def get_scan_status():
             "analysis_time": analysis_data.get("analysis_time", ""),
             "analysis_duration_seconds": analysis_data.get("analysis_duration_seconds"),
             "movers_count": analysis_data.get("movers_count", 0),
-            "is_stale": scan_date != today,
+            "is_stale": _is_data_stale(scan_date),
         }
 
     return result
@@ -204,7 +241,7 @@ def get_job_status(job_id: str):
 # ---------------------------------------------------------------------------
 
 # Project root for locating job scripts
-_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 
 @router.post("/scan/refresh")
