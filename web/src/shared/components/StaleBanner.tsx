@@ -20,7 +20,9 @@ export function StaleBanner({ scanDate, refreshing, refreshStage, refreshDetail,
             ? `Refreshing: ${refreshStage} — ${refreshDetail}`
             : refreshError
               ? `Refresh failed: ${refreshError}`
-              : `Data is stale — last scan: ${scanDate}. Run the scanner to refresh.`}
+              : scanDate
+                ? `Data is stale — last scan: ${scanDate}. Run the scanner to refresh.`
+                : `No scan data found. Run the scanner to get started.`}
         </span>
         {isAdmin && onRefresh && (
           <button

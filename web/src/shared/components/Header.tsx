@@ -12,9 +12,10 @@ interface HeaderProps {
 }
 
 export function Header({ scanStatus, refreshing, refreshStage, refreshDetail, refreshError, onRefresh }: HeaderProps) {
+  const hasNoData = scanStatus != null && scanStatus.movers == null && scanStatus.analysis == null;
   const isStale = scanStatus?.analysis?.is_stale ?? scanStatus?.movers?.is_stale ?? false;
   const scanDate = scanStatus?.analysis?.scan_date ?? scanStatus?.movers?.scan_date ?? '';
-  const showBanner = isStale || refreshing || !!refreshError;
+  const showBanner = hasNoData || isStale || refreshing || !!refreshError;
 
   return (
     <header>
