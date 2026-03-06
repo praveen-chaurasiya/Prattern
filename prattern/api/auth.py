@@ -11,6 +11,8 @@ from prattern.config import Config
 
 PROTECTED_PREFIXES = ("/movers", "/analysis", "/scan", "/jobs")
 PUBLIC_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
+# Read-only GET endpoints that should be public (no auth)
+PUBLIC_GET_PATHS = {"/movers", "/analysis/latest", "/scan/status"}
 
 # Theme routes that are public (read-only)
 THEME_PUBLIC_PREFIXES = ("/themes/tracker",)
@@ -33,6 +35,10 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         if path in PUBLIC_PATHS:
+            return await call_next(request)
+
+        # Read-only data endpoints are public
+        if request.method == "GET" and path in PUBLIC_GET_PATHS:
             return await call_next(request)
 
         # Theme routes: GET is public, POST/DELETE require auth
